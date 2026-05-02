@@ -186,6 +186,9 @@ public class SlotsController : ControllerBase
     {
         try
         {
+            if (request == null || string.IsNullOrWhiteSpace(request.MeetingId))
+                return BadRequest(new { success = false, error = "INVALID_REQUEST" });
+
             var meeting = await _mongoDB.Meetings
                 .Find(x => x.Id == request.MeetingId)
                 .FirstOrDefaultAsync();
@@ -275,5 +278,4 @@ public class SlotsController : ControllerBase
         }
     }   
 }
-
 
