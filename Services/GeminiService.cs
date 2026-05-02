@@ -9,7 +9,8 @@ public class GeminiService
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
-    private const string GeminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    // Gemini 3.0 Flash (또는 최신 Flash 모델)
+    private const string GeminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent";
 
     public GeminiService(IConfiguration config, HttpClient httpClient)
     {
@@ -69,10 +70,12 @@ public class GeminiService
 
         sb.AppendLine();
         sb.AppendLine("위 정보를 기반으로 모든 참여자가 참석 가능한 '가장 최적의 회의 시간' TOP 3를 추천해줘.");
-        sb.AppendLine("답변은 다음 형식으로 해줘:");
-        sb.AppendLine("1. YYYY-MM-DD HH:MM");
-        sb.AppendLine("2. YYYY-MM-DD HH:MM");
-        sb.AppendLine("3. YYYY-MM-DD HH:MM");
+        sb.AppendLine("반드시 다음 JSON 형식으로만 답변해줘. 추가 설명은 하지 말고 JSON만 출력해줘:");
+        sb.AppendLine("[");
+        sb.AppendLine("  { \"time\": \"YYYY-MM-DD HH:MM\", \"reason\": \"이유\" },");
+        sb.AppendLine("  { \"time\": \"YYYY-MM-DD HH:MM\", \"reason\": \"이유\" },");
+        sb.AppendLine("  { \"time\": \"YYYY-MM-DD HH:MM\", \"reason\": \"이유\" }");
+        sb.AppendLine("]");
 
         return sb.ToString();
     }
@@ -93,10 +96,11 @@ public class GeminiService
             },
             generationConfig = new
             {
-                temperature = 0.7,
+                responseMimeType = "application/json", // JSON 응답 강제
+                temperature = 0.2, // 낮은 온도로 안정적인 JSON 출력
                 topK = 40,
                 topP = 0.95,
-                maxOutputTokens = 500
+                maxOutputTokens = 1000
             }
         };
 
@@ -124,23 +128,35 @@ public class GeminiService
             using JsonDocument doc = JsonDocument.Parse(jsonResponse);
             var root = doc.RootElement;
 
-            // Gemini 응답 구조: contents[0].parts[0].text
+            // Gemini 응답 구조: candidates[0].content.parts[0].text
             var text = root
                 .GetProperty("candidates")[0]
                 .GetProperty("content")
                 .GetProperty("parts")[0]
                 .GetProperty("text")
-                .GetString() ?? "";
+                .GetString() ?? "[]";
 
-            // 시간대 추출 (정규식)
-            var regex = new System.Text.RegularExpressions.Regex(
-                @"(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})"
-            );
+            // JSON 응답에서 time 필드 추출
+            using JsonDocument parsedJson = JsonDocument.Parse(text);
+            var recommendations = parsedJson.RootElement;
 
-            return regex.Matches(text)
-                .Cast<System.Text.RegularExpressions.Match>()
-                .Select(m => m.Value)
-                .ToList();
+            var times = new List<string>();
+            if (recommendations.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var item in recommendations.EnumerateArray())
+                {
+                    if (item.TryGetProperty("time", out var timeElement))
+                    {
+                        var timeStr = timeElement.GetString();
+                        if (!string.IsNullOrEmpty(timeStr))
+                        {
+                            times.Add(timeStr);
+                        }
+                    }
+                }
+            }
+
+            return times;
         }
         catch (Exception ex)
         {

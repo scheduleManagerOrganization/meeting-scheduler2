@@ -262,7 +262,7 @@ public class SlotsController : ControllerBase
         {
             return StatusCode(500, new { success = false, error = e.Message });
         }
-    }
+    }   
 }
 
 
