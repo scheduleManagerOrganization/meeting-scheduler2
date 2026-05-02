@@ -21,7 +21,12 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<MongoDBService>();
 builder.Services.AddSingleton<AuthService>();
 builder.Services.AddScoped<GeminiService>();  // ✅ 추가
-builder.Services.AddHttpClient<GeminiService>();  // ✅ HttpClient 등록
+builder.Services.AddHttpClient<GeminiService>()  // ✅ HttpClient 등록
+    .ConfigureHttpClient(client =>
+    {
+        // 🔧 Gemini API 타임아웃 설정 (기본 30초는 부족)
+        client.Timeout = TimeSpan.FromSeconds(120);  // 2분
+    });
 
 // 🔧 JWT Authentication 설정 추가
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

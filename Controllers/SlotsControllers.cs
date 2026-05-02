@@ -213,9 +213,13 @@ public class SlotsController : ControllerBase
                 .ToListAsync();
 
             // ✅ Gemini AI 추천 호출
+            Console.WriteLine($"[AI 추천] 시작: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
             var recommendedTimes = await geminiService.RecommendBestSlots(meeting, availabilities, topN: 5);
+            Console.WriteLine($"[AI 추천] 완료: {recommendedTimes.Count}개 추천 - {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
 
             if (!recommendedTimes.Any())
+            {
+                Console.WriteLine("[AI 추천] ⚠️ 추천 결과 없음");
                 return Ok(new
                 {
                     success = true,
@@ -225,6 +229,7 @@ public class SlotsController : ControllerBase
                         message = "AI 추천 결과가 없습니다"
                     }
                 });
+            }
 
             // 추천된 시간대로 ProposedSlot 생성
             var slots = new List<ProposedSlot>();
@@ -243,6 +248,10 @@ public class SlotsController : ControllerBase
                         CreatedAt = DateTime.UtcNow
                     });
                 }
+                else
+                {
+                    Console.WriteLine($"[AI 추천] ⚠️ DateTime 파싱 실패: {time}");
+                }
             }
 
             if (slots.Any())
@@ -260,7 +269,9 @@ public class SlotsController : ControllerBase
         }
         catch (Exception e)
         {
-            return StatusCode(500, new { success = false, error = e.Message });
+            Console.WriteLine($"[AI 추천] ❌ 에러: {e.GetType().Name} - {e.Message}");
+            Console.WriteLine($"[AI 추천] 스택 트레이스: {e.StackTrace}");
+            return StatusCode(500, new { success = false, error = e.Message, details = e.StackTrace });
         }
     }   
 }

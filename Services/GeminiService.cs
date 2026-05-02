@@ -10,7 +10,7 @@ public class GeminiService
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     // Gemini 3.0 Flash (또는 최신 Flash 모델)
-    private const string GeminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent";
+    private const string GeminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
     public GeminiService(IConfiguration config, HttpClient httpClient)
     {
@@ -29,20 +29,37 @@ public class GeminiService
     {
         try
         {
+            Console.WriteLine($"[GeminiService] 시작 - Meeting: {meeting.Title}");
+            Console.WriteLine($"[GeminiService] 참여자 수: {memberAvailabilities.Count}");
+
             // 1. 프롬프트 생성 (사람이 읽을 수 있게)
             var prompt = BuildPrompt(meeting, memberAvailabilities);
+            Console.WriteLine($"[GeminiService] 프롬프트 생성 완료 ({prompt.Length} chars)");
 
             // 2. Gemini API 호출
+            Console.WriteLine($"[GeminiService] Gemini API 호출 시작...");
             var response = await CallGeminiApi(prompt);
+            Console.WriteLine($"[GeminiService] Gemini API 응답 수신 ({response.Length} chars)");
 
             // 3. 응답 파싱 (추천된 시간대 추출)
             var recommendedTimes = ParseGeminiResponse(response);
+            Console.WriteLine($"[GeminiService] 파싱 완료: {recommendedTimes.Count}개 시간대 추출");
+
+            if (recommendedTimes.Any())
+            {
+                foreach (var time in recommendedTimes.Take(3))
+                {
+                    Console.WriteLine($"[GeminiService] - {time}");
+                }
+            }
 
             return recommendedTimes.Take(topN).ToList();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Gemini API Error: {ex.Message}");
+            Console.WriteLine($"[GeminiService] ❌ 에러: {ex.GetType().Name}");
+            Console.WriteLine($"[GeminiService] 메시지: {ex.Message}");
+            Console.WriteLine($"[GeminiService] 스택: {ex.StackTrace}");
             return new List<string>(); // 실패 시 빈 리스트
         }
     }
@@ -110,31 +127,73 @@ public class GeminiService
             "application/json"
         );
 
-        var response = await _httpClient.PostAsync(
-            $"{GeminiApiUrl}?key={_apiKey}",
-            content
-        );
+        try
+        {
+            Console.WriteLine($"[Gemini API] 요청 시작: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
 
-        response.EnsureSuccessStatusCode();
+            var response = await _httpClient.PostAsync(
+                $"{GeminiApiUrl}?key={_apiKey}",
+                content
+            );
 
-        var responseString = await response.Content.ReadAsStringAsync();
-        return responseString;
+            Console.WriteLine($"[Gemini API] 응답 받음: {response.StatusCode} ({DateTime.UtcNow:yyyy-MM-dd HH:mm:ss})");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[Gemini API] 에러 응답: {errorContent}");
+                throw new Exception($"Gemini API 호출 실패: {response.StatusCode} - {errorContent}");
+            }
+
+            var responseString = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"[Gemini API] 응답 파싱 완료: {responseString.Length} bytes");
+
+            return responseString;
+        }
+        catch (TaskCanceledException ex)
+        {
+            Console.WriteLine($"[Gemini API] 타임아웃 에러: {ex.Message}");
+            throw new Exception("Gemini API 요청 타임아웃 (120초 초과)", ex);
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"[Gemini API] HTTP 에러: {ex.Message}");
+            throw;
+        }
     }
 
     private List<string> ParseGeminiResponse(string jsonResponse)
     {
         try
         {
+            Console.WriteLine($"[GeminiService.Parse] 시작 (응답 크기: {jsonResponse.Length} bytes)");
+
             using JsonDocument doc = JsonDocument.Parse(jsonResponse);
             var root = doc.RootElement;
 
+            Console.WriteLine($"[GeminiService.Parse] Root element kind: {root.ValueKind}");
+
             // Gemini 응답 구조: candidates[0].content.parts[0].text
-            var text = root
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString() ?? "[]";
+            if (!root.TryGetProperty("candidates", out var candidates))
+            {
+                Console.WriteLine("[GeminiService.Parse] ❌ 'candidates' 필드 없음");
+                return new List<string>();
+            }
+
+            Console.WriteLine($"[GeminiService.Parse] candidates 배열 길이: {candidates.GetArrayLength()}");
+
+            if (candidates.GetArrayLength() == 0)
+            {
+                Console.WriteLine("[GeminiService.Parse] ❌ candidates 배열이 비어있음");
+                return new List<string>();
+            }
+
+            var candidate = candidates[0];
+            var content = candidate.GetProperty("content");
+            var parts = content.GetProperty("parts");
+            var text = parts[0].GetProperty("text").GetString() ?? "[]";
+
+            Console.WriteLine($"[GeminiService.Parse] AI 응답 텍스트: {text.Substring(0, Math.Min(200, text.Length))}...");
 
             // JSON 응답에서 time 필드 추출
             using JsonDocument parsedJson = JsonDocument.Parse(text);
@@ -156,11 +215,14 @@ public class GeminiService
                 }
             }
 
+            Console.WriteLine($"[GeminiService.Parse] 추출된 시간: {times.Count}개");
             return times;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Parse Error: {ex.Message}");
+            Console.WriteLine($"[GeminiService.Parse] ❌ 파싱 에러: {ex.GetType().Name}");
+            Console.WriteLine($"[GeminiService.Parse] 메시지: {ex.Message}");
+            Console.WriteLine($"[GeminiService.Parse] 응답 프리뷰: {jsonResponse.Substring(0, Math.Min(500, jsonResponse.Length))}");
             return new List<string>();
         }
     }
