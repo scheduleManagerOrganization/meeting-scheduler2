@@ -30,6 +30,9 @@ public class ProposedSlot
     
     [BsonElement("ai_score")]
     public double AiScore { get; set; }
+
+    [BsonElement("ai_reason")]
+    public string? AiReason { get; set; }
     
     [BsonElement("is_finalized")]
     public bool IsFinalized { get; set; } = false;

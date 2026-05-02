@@ -12,10 +12,12 @@ namespace MeetingScheduler.Controllers;
 public class SlotsController : ControllerBase
 {
     private readonly MongoDBService _mongoDB;
+    private readonly GeminiService _geminiService;
     
-    public SlotsController(MongoDBService mongoDB)
+    public SlotsController(MongoDBService mongoDB, GeminiService geminiService)
     {
         _mongoDB = mongoDB;
+        _geminiService = geminiService;
     }
     
     [HttpPost("suggest-slots")]
@@ -180,9 +182,7 @@ public class SlotsController : ControllerBase
     }
 
     [HttpPost("ai-recommend-slots")]
-    public async Task<IActionResult> AiRecommendSlots(
-    [FromBody] SuggestSlotsRequest request,
-    [FromServices] GeminiService geminiService)
+    public async Task<IActionResult> AiRecommendSlots([FromBody] SuggestSlotsRequest request)
     {
         try
         {
@@ -217,10 +217,10 @@ public class SlotsController : ControllerBase
 
             // ✅ Gemini AI 추천 호출
             Console.WriteLine($"[AI 추천] 시작: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
-            var recommendedTimes = await geminiService.RecommendBestSlots(meeting, availabilities, topN: 5);
-            Console.WriteLine($"[AI 추천] 완료: {recommendedTimes.Count}개 추천 - {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
+            var recommendations = await _geminiService.RecommendBestSlots(meeting, availabilities, topN: 5);
+            Console.WriteLine($"[AI 추천] 완료: {recommendations.Count}개 추천 - {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
 
-            if (!recommendedTimes.Any())
+            if (!recommendations.Any())
             {
                 Console.WriteLine("[AI 추천] ⚠️ 추천 결과 없음");
                 return Ok(new
@@ -236,9 +236,9 @@ public class SlotsController : ControllerBase
 
             // 추천된 시간대로 ProposedSlot 생성
             var slots = new List<ProposedSlot>();
-            foreach (var time in recommendedTimes)
+            foreach (var recommendation in recommendations)
             {
-                if (DateTime.TryParse(time, out var startTime))
+                if (DateTime.TryParse(recommendation.Time, out var startTime))
                 {
                     slots.Add(new ProposedSlot
                     {
@@ -247,13 +247,14 @@ public class SlotsController : ControllerBase
                         StartTime = startTime,
                         EndTime = startTime.AddMinutes(meeting.DurationMinutes),
                         AiScore = 95.0, // ✅ AI 추천이라 높은 점수
+                        AiReason = recommendation.Reason,
                         Responses = new List<SlotResponse>(),
                         CreatedAt = DateTime.UtcNow
                     });
                 }
                 else
                 {
-                    Console.WriteLine($"[AI 추천] ⚠️ DateTime 파싱 실패: {time}");
+                    Console.WriteLine($"[AI 추천] ⚠️ DateTime 파싱 실패: {recommendation.Time}");
                 }
             }
 
@@ -278,4 +279,3 @@ public class SlotsController : ControllerBase
         }
     }   
 }
-

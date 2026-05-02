@@ -22,7 +22,7 @@ public class GeminiService
     /// <summary>
     /// Gemini AI를 사용해 최적의 회의 시간 추천
     /// </summary>
-    public async Task<List<string>> RecommendBestSlots(
+    public async Task<List<SlotRecommendation>> RecommendBestSlots(
         Meeting meeting, 
         List<UserCalendar> memberAvailabilities,
         int topN = 3)
@@ -42,25 +42,25 @@ public class GeminiService
             Console.WriteLine($"[GeminiService] Gemini API 응답 수신 ({response.Length} chars)");
 
             // 3. 응답 파싱 (추천된 시간대 추출)
-            var recommendedTimes = ParseGeminiResponse(response);
-            Console.WriteLine($"[GeminiService] 파싱 완료: {recommendedTimes.Count}개 시간대 추출");
+            var recommendations = ParseGeminiResponse(response);
+            Console.WriteLine($"[GeminiService] 파싱 완료: {recommendations.Count}개 시간대 추출");
 
-            if (recommendedTimes.Any())
+            if (recommendations.Any())
             {
-                foreach (var time in recommendedTimes.Take(3))
+                foreach (var rec in recommendations.Take(3))
                 {
-                    Console.WriteLine($"[GeminiService] - {time}");
+                    Console.WriteLine($"[GeminiService] - {rec.Time} ({rec.Reason})");
                 }
             }
 
-            return recommendedTimes.Take(topN).ToList();
+            return recommendations.Take(topN).ToList();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[GeminiService] ❌ 에러: {ex.GetType().Name}");
             Console.WriteLine($"[GeminiService] 메시지: {ex.Message}");
             Console.WriteLine($"[GeminiService] 스택: {ex.StackTrace}");
-            return new List<string>(); // 실패 시 빈 리스트
+            return new List<SlotRecommendation>(); // 실패 시 빈 리스트
         }
     }
 
@@ -163,7 +163,7 @@ public class GeminiService
         }
     }
 
-    private List<string> ParseGeminiResponse(string jsonResponse)
+    private List<SlotRecommendation> ParseGeminiResponse(string jsonResponse)
     {
         try
         {
@@ -178,7 +178,7 @@ public class GeminiService
             if (!root.TryGetProperty("candidates", out var candidates))
             {
                 Console.WriteLine("[GeminiService.Parse] ❌ 'candidates' 필드 없음");
-                return new List<string>();
+                return new List<SlotRecommendation>();
             }
 
             Console.WriteLine($"[GeminiService.Parse] candidates 배열 길이: {candidates.GetArrayLength()}");
@@ -186,7 +186,7 @@ public class GeminiService
             if (candidates.GetArrayLength() == 0)
             {
                 Console.WriteLine("[GeminiService.Parse] ❌ candidates 배열이 비어있음");
-                return new List<string>();
+                return new List<SlotRecommendation>();
             }
 
             var candidate = candidates[0];
@@ -211,50 +211,54 @@ public class GeminiService
 
             // JSON 응답에서 time 필드 추출
             using JsonDocument parsedJson = JsonDocument.Parse(cleaned);
-            var recommendations = parsedJson.RootElement;
+            var rootRecommendations = parsedJson.RootElement;
 
-            var times = new List<string>();
-            if (recommendations.ValueKind == JsonValueKind.Array)
+            var recommendations = new List<SlotRecommendation>();
+            if (rootRecommendations.ValueKind == JsonValueKind.Array)
             {
-                foreach (var item in recommendations.EnumerateArray())
+                foreach (var item in rootRecommendations.EnumerateArray())
                 {
-                    AddTimeFromItem(item, times);
+                    AddRecommendationFromItem(item, recommendations);
                 }
             }
-            else if (recommendations.ValueKind == JsonValueKind.Object)
+            else if (rootRecommendations.ValueKind == JsonValueKind.Object)
             {
                 // 모델이 { "recommendations": [...] } 또는 { "slots": [...] }로 감싸서 반환하는 경우 대응
-                if (recommendations.TryGetProperty("recommendations", out var wrappedArray) && wrappedArray.ValueKind == JsonValueKind.Array)
+                if (rootRecommendations.TryGetProperty("recommendations", out var wrappedArray) && wrappedArray.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var item in wrappedArray.EnumerateArray())
-                        AddTimeFromItem(item, times);
+                        AddRecommendationFromItem(item, recommendations);
                 }
-                else if (recommendations.TryGetProperty("slots", out var slotsArray) && slotsArray.ValueKind == JsonValueKind.Array)
+                else if (rootRecommendations.TryGetProperty("slots", out var slotsArray) && slotsArray.ValueKind == JsonValueKind.Array)
                 {
                     foreach (var item in slotsArray.EnumerateArray())
-                        AddTimeFromItem(item, times);
+                        AddRecommendationFromItem(item, recommendations);
                 }
                 else
                 {
-                    AddTimeFromItem(recommendations, times);
+                    AddRecommendationFromItem(rootRecommendations, recommendations);
                 }
             }
 
-            Console.WriteLine($"[GeminiService.Parse] 추출된 시간: {times.Count}개");
-            return times.Distinct().ToList();
+            Console.WriteLine($"[GeminiService.Parse] 추출된 시간: {recommendations.Count}개");
+            return recommendations
+                .GroupBy(x => x.Time)
+                .Select(g => g.First())
+                .ToList();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[GeminiService.Parse] ❌ 파싱 에러: {ex.GetType().Name}");
             Console.WriteLine($"[GeminiService.Parse] 메시지: {ex.Message}");
             Console.WriteLine($"[GeminiService.Parse] 응답 프리뷰: {jsonResponse.Substring(0, Math.Min(500, jsonResponse.Length))}");
-            return new List<string>();
+            return new List<SlotRecommendation>();
         }
     }
 
-    private static void AddTimeFromItem(JsonElement item, List<string> times)
+    private static void AddRecommendationFromItem(JsonElement item, List<SlotRecommendation> recommendations)
     {
         string? raw = null;
+        string? reason = null;
 
         if (item.ValueKind == JsonValueKind.String)
         {
@@ -263,6 +267,7 @@ public class GeminiService
         else if (item.ValueKind == JsonValueKind.Object)
         {
             if (item.TryGetProperty("time", out var timeElement)) raw = timeElement.GetString();
+            if (item.TryGetProperty("reason", out var reasonElement)) reason = reasonElement.GetString();
             else if (item.TryGetProperty("startTime", out var startTime)) raw = startTime.GetString();
             else if (item.TryGetProperty("datetime", out var dateTime)) raw = dateTime.GetString();
             else if (item.TryGetProperty("slot", out var slot)) raw = slot.GetString();
@@ -274,12 +279,20 @@ public class GeminiService
         // downstream DateTime.TryParse 성공률을 높이기 위한 표준화
         if (DateTime.TryParse(raw, out var parsed))
         {
-            times.Add(parsed.ToString("yyyy-MM-dd HH:mm"));
+            recommendations.Add(new SlotRecommendation
+            {
+                Time = parsed.ToString("yyyy-MM-dd HH:mm"),
+                Reason = string.IsNullOrWhiteSpace(reason) ? "AI recommended" : reason.Trim()
+            });
         }
         else
         {
             // 파싱 안 되는 문자열도 로그 확인을 위해 우선 전달
-            times.Add(raw.Trim());
+            recommendations.Add(new SlotRecommendation
+            {
+                Time = raw.Trim(),
+                Reason = string.IsNullOrWhiteSpace(reason) ? "AI recommended" : reason.Trim()
+            });
         }
     }
 
