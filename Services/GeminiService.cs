@@ -174,7 +174,7 @@ public class GeminiService
 
             Console.WriteLine($"[GeminiService.Parse] Root element kind: {root.ValueKind}");
 
-            // Gemini 응답 구조: candidates[0].content.parts[0].text
+            // Gemini 응답 구조: candidates[0].content.parts[*].text
             if (!root.TryGetProperty("candidates", out var candidates))
             {
                 Console.WriteLine("[GeminiService.Parse] ❌ 'candidates' 필드 없음");
@@ -192,32 +192,52 @@ public class GeminiService
             var candidate = candidates[0];
             var content = candidate.GetProperty("content");
             var parts = content.GetProperty("parts");
-            var text = parts[0].GetProperty("text").GetString() ?? "[]";
+            var text = JoinTextParts(parts);
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                Console.WriteLine("[GeminiService.Parse] ❌ parts 내 text가 비어있음");
+                return new List<string>();
+            }
 
             Console.WriteLine($"[GeminiService.Parse] AI 응답 텍스트: {text.Substring(0, Math.Min(200, text.Length))}...");
 
+            // Gemini가 간헐적으로 ```json ... ``` 형태로 반환하는 경우 정제
+            var cleaned = ExtractJsonPayload(text);
+
             // JSON 응답에서 time 필드 추출
-            using JsonDocument parsedJson = JsonDocument.Parse(text);
+            using JsonDocument parsedJson = JsonDocument.Parse(cleaned);
             var recommendations = parsedJson.RootElement;
 
             var times = new List<string>();
-            if (recommendations.ValueKind == System.Text.Json.JsonValueKind.Array)
+            if (recommendations.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in recommendations.EnumerateArray())
                 {
-                    if (item.TryGetProperty("time", out var timeElement))
-                    {
-                        var timeStr = timeElement.GetString();
-                        if (!string.IsNullOrEmpty(timeStr))
-                        {
-                            times.Add(timeStr);
-                        }
-                    }
+                    AddTimeFromItem(item, times);
+                }
+            }
+            else if (recommendations.ValueKind == JsonValueKind.Object)
+            {
+                // 모델이 { "recommendations": [...] } 또는 { "slots": [...] }로 감싸서 반환하는 경우 대응
+                if (recommendations.TryGetProperty("recommendations", out var wrappedArray) && wrappedArray.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in wrappedArray.EnumerateArray())
+                        AddTimeFromItem(item, times);
+                }
+                else if (recommendations.TryGetProperty("slots", out var slotsArray) && slotsArray.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in slotsArray.EnumerateArray())
+                        AddTimeFromItem(item, times);
+                }
+                else
+                {
+                    AddTimeFromItem(recommendations, times);
                 }
             }
 
             Console.WriteLine($"[GeminiService.Parse] 추출된 시간: {times.Count}개");
-            return times;
+            return times.Distinct().ToList();
         }
         catch (Exception ex)
         {
@@ -226,5 +246,74 @@ public class GeminiService
             Console.WriteLine($"[GeminiService.Parse] 응답 프리뷰: {jsonResponse.Substring(0, Math.Min(500, jsonResponse.Length))}");
             return new List<string>();
         }
+    }
+
+    private static void AddTimeFromItem(JsonElement item, List<string> times)
+    {
+        string? raw = null;
+
+        if (item.ValueKind == JsonValueKind.String)
+        {
+            raw = item.GetString();
+        }
+        else if (item.ValueKind == JsonValueKind.Object)
+        {
+            if (item.TryGetProperty("time", out var timeElement)) raw = timeElement.GetString();
+            else if (item.TryGetProperty("startTime", out var startTime)) raw = startTime.GetString();
+            else if (item.TryGetProperty("datetime", out var dateTime)) raw = dateTime.GetString();
+            else if (item.TryGetProperty("slot", out var slot)) raw = slot.GetString();
+        }
+
+        if (string.IsNullOrWhiteSpace(raw))
+            return;
+
+        // downstream DateTime.TryParse 성공률을 높이기 위한 표준화
+        if (DateTime.TryParse(raw, out var parsed))
+        {
+            times.Add(parsed.ToString("yyyy-MM-dd HH:mm"));
+        }
+        else
+        {
+            // 파싱 안 되는 문자열도 로그 확인을 위해 우선 전달
+            times.Add(raw.Trim());
+        }
+    }
+
+    private static string ExtractJsonPayload(string text)
+    {
+        var trimmed = text.Trim();
+
+        if (trimmed.StartsWith("```"))
+        {
+            var firstNewLine = trimmed.IndexOf('\n');
+            var lastFence = trimmed.LastIndexOf("```", StringComparison.Ordinal);
+            if (firstNewLine >= 0 && lastFence > firstNewLine)
+            {
+                trimmed = trimmed.Substring(firstNewLine + 1, lastFence - firstNewLine - 1).Trim();
+            }
+        }
+
+        return trimmed;
+    }
+
+    private static string JoinTextParts(JsonElement parts)
+    {
+        if (parts.ValueKind != JsonValueKind.Array)
+            return string.Empty;
+
+        var sb = new StringBuilder();
+
+        foreach (var part in parts.EnumerateArray())
+        {
+            if (part.ValueKind == JsonValueKind.Object &&
+                part.TryGetProperty("text", out var textElement))
+            {
+                var piece = textElement.GetString();
+                if (!string.IsNullOrEmpty(piece))
+                    sb.Append(piece);
+            }
+        }
+
+        return sb.ToString();
     }
 }
