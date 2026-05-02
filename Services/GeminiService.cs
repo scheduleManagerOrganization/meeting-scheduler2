@@ -192,11 +192,21 @@ public class GeminiService
             var candidate = candidates[0];
             var content = candidate.GetProperty("content");
             var parts = content.GetProperty("parts");
-            var text = parts[0].GetProperty("text").GetString() ?? "[]";
+
+            // parts 배열에 text가 여러 조각으로 들어오는 경우가 있어 모두 합침
+            var textBuilder = new StringBuilder();
+            foreach (var part in parts.EnumerateArray())
+            {
+                if (part.TryGetProperty("text", out var textElement))
+                {
+                    textBuilder.Append(textElement.GetString());
+                }
+            }
+            var text = textBuilder.Length > 0 ? textBuilder.ToString() : "[]";
 
             Console.WriteLine($"[GeminiService.Parse] AI 응답 텍스트: {text.Substring(0, Math.Min(200, text.Length))}...");
 
-            // Gemini가 간헐적으로 ```json ... ``` 형태로 반환하는 경우 정제
+            // Gemini가 간헐적으로 ```json ... ``` 형태로 반환하거나 끝이 잘린 경우 정제
             var cleaned = ExtractJsonPayload(text);
 
             // JSON 응답에서 time 필드 추출
@@ -287,6 +297,64 @@ public class GeminiService
             }
         }
 
+        if (TryExtractBalancedJson(trimmed, '[', ']', out var arrayPayload))
+            return arrayPayload;
+
+        if (TryExtractBalancedJson(trimmed, '{', '}', out var objectPayload))
+            return objectPayload;
+
         return trimmed;
+    }
+
+    private static bool TryExtractBalancedJson(string source, char openChar, char closeChar, out string payload)
+    {
+        payload = string.Empty;
+
+        var start = source.IndexOf(openChar);
+        if (start < 0)
+            return false;
+
+        var depth = 0;
+        var inString = false;
+        var escaped = false;
+
+        for (var i = start; i < source.Length; i++)
+        {
+            var c = source[i];
+
+            if (escaped)
+            {
+                escaped = false;
+                continue;
+            }
+
+            if (c == '\\')
+            {
+                escaped = true;
+                continue;
+            }
+
+            if (c == '"')
+            {
+                inString = !inString;
+                continue;
+            }
+
+            if (inString)
+                continue;
+
+            if (c == openChar)
+                depth++;
+            else if (c == closeChar)
+                depth--;
+
+            if (depth == 0)
+            {
+                payload = source.Substring(start, i - start + 1).Trim();
+                return true;
+            }
+        }
+
+        return false;
     }
 }
