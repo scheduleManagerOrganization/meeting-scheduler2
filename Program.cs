@@ -90,9 +90,8 @@ app.MapHub<MeetingHub>("/meetingHub");
 
 
 // Startup route diagnostics (Render logs)
-var endpointSources = app.Services.GetRequiredService<IEnumerable<EndpointDataSource>>();
-var routePatterns = endpointSources
-    .SelectMany(ds => ds.Endpoints)
+var endpointDataSource = app.Services.GetRequiredService<EndpointDataSource>();
+var routePatterns = endpointDataSource.Endpoints
     .OfType<RouteEndpoint>()
     .Select(e => e.RoutePattern.RawText)
     .Where(p => !string.IsNullOrWhiteSpace(p))
@@ -130,8 +129,8 @@ app.MapGet("/", () => Results.Json(new
 
 app.MapGet("/api/debug/routes", () =>
 {
-    var routes = app.Services.GetRequiredService<IEnumerable<EndpointDataSource>>()
-        .SelectMany(ds => ds.Endpoints)
+    var routes = app.Services.GetRequiredService<EndpointDataSource>()
+        .Endpoints
         .OfType<RouteEndpoint>()
         .Select(e => new
         {
