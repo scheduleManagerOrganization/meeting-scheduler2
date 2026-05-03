@@ -182,6 +182,8 @@ public class SlotsController : ControllerBase
     }
 
     [HttpPost("ai-recommend-slots")]
+    [HttpPost("ai/recommend-slots")]
+    [HttpPost("ai-recommend-slot")]
     public async Task<IActionResult> AiRecommendSlots([FromBody] SuggestSlotsRequest request)
     {
         try
