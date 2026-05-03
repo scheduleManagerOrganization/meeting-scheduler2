@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace UI_Forms
 {
@@ -19,6 +20,7 @@ namespace UI_Forms
         // 3. 전역 상태 변수 (로그인 후 저장)
         public static string JwtToken { get; private set; } = string.Empty;
         public static string CurrentUserId { get; private set; } = string.Empty;
+        public static string CurrentUserName { get; private set; } = string.Empty; // 이름 속성 추가
 
         // JSON 직렬화 설정 (낙타표기법 등 서버 명세에 맞춤)
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
@@ -29,10 +31,11 @@ namespace UI_Forms
         /// <summary>
         /// 로그인 성공 시 발급받은 토큰과 유저 ID를 저장하고 헤더에 세팅합니다.
         /// </summary>
-        public static void SetAuthData(string token, string userId)
+        public static void SetAuthData(string token, string userId, string userName)
         {
             JwtToken = token;
             CurrentUserId = userId;
+            CurrentUserName = userName; // 이름 저장
 
             // 이후 모든 HTTP 요청 헤더에 JWT 토큰을 자동으로 포함
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);

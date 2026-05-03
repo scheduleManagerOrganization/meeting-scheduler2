@@ -89,6 +89,8 @@
     <Compile Include="ApiService.cs" />
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\AuthModels.cs" />
+    <Compile Include="Models\ScheduleModels.cs" />
+    <Compile Include="Models\TeamModels.cs" />
     <Compile Include="RegisterForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -116,6 +118,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="LoginForm.resx">
+      <DependentUpon>LoginForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
