@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Routing;
 using System.Text;
 using MeetingScheduler.Services;
 using MongoDB.Driver;
@@ -87,6 +88,25 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<MeetingHub>("/meetingHub");
 
+
+// Startup route diagnostics (Render logs)
+var endpointSources = app.Services.GetRequiredService<IEnumerable<EndpointDataSource>>();
+var routePatterns = endpointSources
+    .SelectMany(ds => ds.Endpoints)
+    .OfType<RouteEndpoint>()
+    .Select(e => e.RoutePattern.RawText)
+    .Where(p => !string.IsNullOrWhiteSpace(p))
+    .Distinct()
+    .OrderBy(p => p)
+    .ToList();
+
+Console.WriteLine("[RouteMap] Registered routes:");
+foreach (var route in routePatterns)
+{
+    Console.WriteLine($"[RouteMap] {route}");
+}
+
+
 // Health check endpoint
 app.MapGet("/health", async (MongoDBService db) =>
 {
@@ -106,6 +126,30 @@ app.MapGet("/", () => Results.Json(new
     websocket = "supported",
     timestamp = DateTime.UtcNow
 }));
+
+
+app.MapGet("/api/debug/routes", () =>
+{
+    var routes = app.Services.GetRequiredService<IEnumerable<EndpointDataSource>>()
+        .SelectMany(ds => ds.Endpoints)
+        .OfType<RouteEndpoint>()
+        .Select(e => new
+        {
+            route = e.RoutePattern.RawText,
+            order = e.Order
+        })
+        .Where(x => !string.IsNullOrWhiteSpace(x.route))
+        .OrderBy(x => x.route)
+        .ToList();
+
+    return Results.Json(new
+    {
+        success = true,
+        count = routes.Count,
+        data = routes,
+        timestamp = DateTime.UtcNow
+    });
+});
 
 // Database initialization endpoint
 app.MapPost("/api/init-db", async (MongoDBService db) =>
