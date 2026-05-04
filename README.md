@@ -42,6 +42,8 @@ Response 200
   "websocket": "supported",
   "timestamp": "2026-05-01T17:32:06.43961Z"
 }
+
+
 2) GET /health
 헬스 체크
 
@@ -51,6 +53,7 @@ Response 200
   "mongodb": "connected",
   "timestamp": "2026-05-01T17:32:06.43961Z"
 }
+
 3) GET /api/debug/routes
 현재 서버에 등록된 라우트 목록 조회 (디버그용)
 
@@ -64,6 +67,7 @@ Response 200
   ],
   "timestamp": "2026-05-03T01:23:45.7215097Z"
 }
+
 4) POST /api/init-db
 테스트 계정 생성 (이미 존재하면 skip)
 
@@ -75,6 +79,8 @@ Response 200
     "users": ["alice@example.com", "bob@example.com"]
   }
 }
+
+
 5) POST /api/auth/register
 Request
 {
@@ -93,6 +99,8 @@ Response 200
     "token": "eyJhbGciOiJIUzI1NiIs..."
   }
 }
+
+
 6) POST /api/auth/login
 Request
 {
@@ -109,6 +117,8 @@ Response 200
     "token": "eyJhbGciOiJIUzI1NiIs..."
   }
 }
+
+
 7) POST /api/teams
 Request
 {
@@ -124,6 +134,8 @@ Response 200
     "join_code": "2FBTTPQT"
   }
 }
+
+
 8) POST /api/teams/join
 Request
 {
@@ -138,6 +150,8 @@ Response 200
     "team_name": "테스트팀"
   }
 }
+
+
 9) GET /api/teams/{userId}
 Response 200
 {
@@ -151,6 +165,8 @@ Response 200
     }
   ]
 }
+
+
 10) POST /api/availability
 같은 user_id + date는 upsert 됩니다.
 
@@ -169,6 +185,8 @@ Response 200
   "success": true,
   "message": "일정이 저장되었습니다"
 }
+
+
 11) GET /api/availability/{userId}/{date}
 Response 200
 {
@@ -184,6 +202,8 @@ Response 200
     "updatedAt": "2026-05-01T17:32:15.23Z"
   }
 }
+
+
 12) GET /api/availability/team/{teamId}/{date}
 Response 200
 {
@@ -207,6 +227,8 @@ Response 200
     }
   ]
 }
+
+
 13) POST /api/meetings
 Request
 {
@@ -224,6 +246,8 @@ Response 200
     "meeting_id": "69f4e39f892000f58058f648"
   }
 }
+
+
 14) GET /api/meetings/{meetingId}
 Response 200
 {
@@ -241,6 +265,8 @@ Response 200
     "finalizedSlotId": null
   }
 }
+
+
 15) GET /api/meetings/team/{teamId}
 Response 200
 {
@@ -260,6 +286,8 @@ Response 200
     }
   ]
 }
+
+
 16) POST /api/suggest-slots (규칙 기반 추천)
 Request
 {
@@ -273,6 +301,8 @@ Response 200
   }
 }
 추천 기준: UTC 오늘부터 7일, 각 날짜의 10시/14시/16시.
+
+
 
 17~19) POST AI 추천 (동일 동작, 경로 alias)
 /api/ai-recommend-slots
@@ -313,6 +343,8 @@ Response 200 (추천 없음)
     "message": "AI 추천 결과가 없습니다"
   }
 }
+
+
 20) GET /api/slots/{meetingId}
 Response 200
 {
@@ -331,6 +363,8 @@ Response 200
     }
   ]
 }
+
+
 21) POST /api/respond-slot
 Request
 {
