@@ -158,7 +158,7 @@ namespace UI_Forms
                 {
                     var request = new
                     {
-                        userId = ApiService.CurrentUserId,
+                        user_Id = ApiService.CurrentUserId,
                         date = kvp.Key,
                         slots = kvp.Value.ToArray()
                     };
