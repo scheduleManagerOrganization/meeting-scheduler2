@@ -195,10 +195,8 @@ namespace UI_Forms
                 {
                     Color userColor = GetTeamUserColor(item.UserId);
                     RememberTeamLegendUser(item.UserId, item.UserName);
-                    _dayControls[index].AddTeamAvailabilitySlot(
-                        item.Slot.Start,
-                        item.Slot.End,
-                        userColor);
+                    string displayTitle = $"{item.Slot.Start} - {item.Slot.End}";
+                    _dayControls[index].AddScheduleSlot(displayTitle, userColor, false);
                 }
 
                 return;
