@@ -26,4 +26,16 @@ namespace UI_Forms.Models
         [JsonPropertyName("slots")]
         public List<SlotDto> Slots { get; set; }
     }
+
+    public class TeamAvailabilityData
+    {
+        [JsonPropertyName("user_id")]
+        public string UserId { get; set; }
+
+        [JsonPropertyName("user_name")]
+        public string UserName { get; set; }
+
+        [JsonPropertyName("slots")]
+        public List<SlotDto> Slots { get; set; }
+    }
 }

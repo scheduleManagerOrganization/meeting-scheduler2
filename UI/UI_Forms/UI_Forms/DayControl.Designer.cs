@@ -42,6 +42,9 @@
             this.flpSchedules.Size = new System.Drawing.Size(130, 55);
             this.flpSchedules.TabIndex = 1;
             this.flpSchedules.WrapContents = false;
+            this.flpSchedules.AutoScroll = true;
+            this.flpSchedules.HorizontalScroll.Enabled = false;
+            this.flpSchedules.HorizontalScroll.Visible = false;
             // 
             // DayControl
             // 

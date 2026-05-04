@@ -33,6 +33,8 @@ namespace UI_Forms
 
             // 기존 일정 초기화
             flpSchedules.Controls.Clear();
+            flpSchedules.HorizontalScroll.Enabled = false;
+            flpSchedules.HorizontalScroll.Visible = false;
         }
 
         // API에서 받아온 일정 슬롯을 화면에 추가
@@ -41,9 +43,9 @@ namespace UI_Forms
         {
             Label lblSlot = new Label
             {
-                Text = $"  {title}", // 선 표시를 위해 약간의 여백 추가
+                Text = $"  {title}",
                 Font = new Font("맑은 고딕", 8F, FontStyle.Bold),
-                Width = flpSchedules.Width - 8,
+                Width = flpSchedules.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 6,
                 Height = 22,
                 Margin = new Padding(2, 1, 2, 1),
                 TextAlign = ContentAlignment.MiddleLeft,
@@ -73,6 +75,71 @@ namespace UI_Forms
             }
 
             flpSchedules.Controls.Add(lblSlot);
+        }
+
+        public void AddTeamAvailabilitySlot(string start, string end, Color color)
+        {
+            int height = GetTeamSlotHeight(start, end);
+            int verticalScrollWidth = SystemInformation.VerticalScrollBarWidth;
+
+            Panel slotPanel = new Panel
+            {
+                Width = flpSchedules.ClientSize.Width - verticalScrollWidth - 6,
+                Height = height,
+                Margin = new Padding(2, 1, 2, 3),
+                BackColor = Color.White,
+                Cursor = Cursors.Hand
+            };
+
+            Label lblStart = new Label
+            {
+                Text = start,
+                Location = new Point(10, 1),
+                Size = new Size(45, 16),
+                Font = new Font("맑은 고딕", 7F, FontStyle.Bold),
+                ForeColor = Color.Black
+            };
+
+            Label lblEnd = new Label
+            {
+                Text = end,
+                Location = new Point(10, height - 17),
+                Size = new Size(45, 16),
+                Font = new Font("맑은 고딕", 7F, FontStyle.Bold),
+                ForeColor = Color.Black
+            };
+
+            // 팀원 이름은 하단 범례에서 보여주고, 셀 안에는 시간 흐름만 남겨 밀도를 낮춥니다.
+            slotPanel.Paint += (s, e) =>
+            {
+                using (Pen p = new Pen(color, 5))
+                {
+                    e.Graphics.DrawLine(p, 4, 5, 4, slotPanel.Height - 5);
+                }
+            };
+
+            slotPanel.Controls.Add(lblStart);
+            slotPanel.Controls.Add(lblEnd);
+            flpSchedules.Controls.Add(slotPanel);
+        }
+
+        private int GetTeamSlotHeight(string start, string end)
+        {
+            int duration = Math.Max(10, ToMinutes(end) - ToMinutes(start));
+
+            // 월간 셀 안에서도 여러 사용자가 쌓일 수 있도록 높이를 제한하되, 긴 가용 시간은 더 길게 표시합니다.
+            return Math.Max(38, Math.Min(72, 30 + duration / 30));
+        }
+
+        private int ToMinutes(string time)
+        {
+            TimeSpan parsed;
+            if (TimeSpan.TryParse(time, out parsed))
+            {
+                return (int)parsed.TotalMinutes;
+            }
+
+            return 0;
         }
     }
 }
