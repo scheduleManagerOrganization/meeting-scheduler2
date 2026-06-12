@@ -12,6 +12,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <Compile Remove="UI_Forms\**\*.cs" />
+    <EmbeddedResource Remove="UI_Forms\**\*.resx" />
+    <None Include="UI_Forms\**\*" />
   </ItemGroup>
 
 </Project>

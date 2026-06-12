@@ -207,9 +207,36 @@ public class SlotsController : ControllerBase
 
             var memberIds = team.Members.Select(m => m.UserId).ToList();
 
-            // 7일 간의 가용성 조회
+            // 조회 범위 결정: DeadlineDate를 고려
             var startDate = DateTime.UtcNow;
-            var dateRange = Enumerable.Range(0, 7)
+            int dayRange = 7; // 기본값
+
+            if (!string.IsNullOrEmpty(meeting.DeadlineDate) && 
+                DateTime.TryParse(meeting.DeadlineDate, out var deadline))
+            {
+                var daysUntilDeadline = (deadline.Date - startDate.Date).Days;
+                if (daysUntilDeadline > 0)
+                {
+                    dayRange = daysUntilDeadline + 1;
+                    Console.WriteLine($"[AI 추천] 데드라인 감지: {meeting.DeadlineDate} ({dayRange}일 범위)");
+                }
+                else if (daysUntilDeadline == 0)
+                {
+                    dayRange = 1;
+                    Console.WriteLine($"[AI 추천] 오늘이 데드라인입니다.");
+                }
+                else
+                {
+                    Console.WriteLine($"[AI 추천] ❌ 데드라인 초과: {meeting.DeadlineDate}");
+                    return BadRequest(new { 
+                        success = false, 
+                        error = "DEADLINE_PASSED",
+                        message = "데드라인이 이미 지났습니다."
+                    });
+                }
+            }
+
+            var dateRange = Enumerable.Range(0, dayRange)
                 .Select(d => startDate.AddDays(d).ToString("yyyy-MM-dd"))
                 .ToList();
 
