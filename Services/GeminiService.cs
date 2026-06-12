@@ -64,25 +64,63 @@ public class GeminiService
         }
     }
 
-    private string BuildPrompt(Meeting meeting, List<UserCalendar> availabilities)
+    //private string BuildPrompt(Meeting meeting, List<UserCalendar> availabilities)
+    //{
+    //    var sb = new StringBuilder();
+    //    sb.AppendLine($"회의명: {meeting.Title}");
+    //    sb.AppendLine($"회의 설명: {meeting.Description}");
+    //    sb.AppendLine($"소요 시간: {meeting.DurationMinutes}분");
+    //    sb.AppendLine();
+    //    sb.AppendLine("참여자들의 가용 시간:");
+
+
+    //    foreach (var av in availabilities)
+    //    {
+    //        sb.AppendLine($"  - 사용자: {av.UserId}");
+    //        if (av.Slots != null)
+    //        {
+    //            foreach (var slot in av.Slots)
+    //            {
+    //                sb.AppendLine($"    {av.Date} {slot.Start}~{slot.End}");
+    //            }
+    //        }
+    //    }
+
+    //    sb.AppendLine();
+    //    sb.AppendLine("위 정보를 기반으로 모든 참여자가 참석 가능한 '가장 최적의 회의 시간' TOP 3를 추천해줘.");
+    //    sb.AppendLine("반드시 다음 JSON 형식으로만 답변해줘. 이유(reason)는 한 문장으로 짧게 작성해:");
+    //    sb.AppendLine("[");
+    //    sb.AppendLine("  { \"time\": \"YYYY-MM-DD HH:MM\", \"reason\": \"이유\" },");
+    //    sb.AppendLine("  { \"time\": \"YYYY-MM-DD HH:MM\", \"reason\": \"이유\" },");
+    //    sb.AppendLine("  { \"time\": \"YYYY-MM-DD HH:MM\", \"reason\": \"이유\" }");
+    //    sb.AppendLine("]");
+
+    //    return sb.ToString();
+    //}
+
+    private string BuildPrompt(Meeting meeting, List<UserCalendar> schedules)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"회의명: {meeting.Title}");
         sb.AppendLine($"회의 설명: {meeting.Description}");
         sb.AppendLine($"소요 시간: {meeting.DurationMinutes}분");
         sb.AppendLine();
-        sb.AppendLine("참여자들의 가용 시간:");
+        sb.AppendLine("참여자들의 일정:");
 
-
-        foreach (var av in availabilities)
+        foreach (var schedule in schedules)
         {
-            sb.AppendLine($"  - 사용자: {av.UserId}");
-            if (av.Slots != null)
+            sb.AppendLine($"  - 사용자: {schedule.UserId}");
+            if (schedule.Slots != null && schedule.Slots.Count > 0)
             {
-                foreach (var slot in av.Slots)
+                sb.AppendLine("    바쁜 시간:");
+                foreach (var slot in schedule.Slots)
                 {
-                    sb.AppendLine($"    {av.Date} {slot.Start}~{slot.End}");
+                    sb.AppendLine($"      [{slot.Title}] {schedule.Date} {slot.Start}~{slot.End}");
                 }
+            }
+            else
+            {
+                sb.AppendLine("    바쁜 시간: 없음 (전일 가용)");
             }
         }
 
