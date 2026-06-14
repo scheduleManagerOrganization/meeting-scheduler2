@@ -7,22 +7,15 @@
         private System.Windows.Forms.TextBox txtTitle;
         private System.Windows.Forms.Label lblStart;
         private System.Windows.Forms.DateTimePicker dtpStartDate;
-
-        // 🌟 분할된 시간/분 콤보박스
         private System.Windows.Forms.ComboBox cmbStartHour;
         private System.Windows.Forms.Label lblStartColon;
         private System.Windows.Forms.ComboBox cmbStartMinute;
-
         private System.Windows.Forms.Label lblEnd;
         private System.Windows.Forms.DateTimePicker dtpEndDate;
-
-        // 🌟 분할된 시간/분 콤보박스
         private System.Windows.Forms.ComboBox cmbEndHour;
         private System.Windows.Forms.Label lblEndColon;
         private System.Windows.Forms.ComboBox cmbEndMinute;
-
-        private System.Windows.Forms.FlowLayoutPanel flpColors;
-        private System.Windows.Forms.Label lblSelectedColor;
+        // 색상 관련 UI 선언 삭제
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnCancel;
 
@@ -46,8 +39,6 @@
             this.cmbEndHour = new System.Windows.Forms.ComboBox();
             this.lblEndColon = new System.Windows.Forms.Label();
             this.cmbEndMinute = new System.Windows.Forms.ComboBox();
-            this.flpColors = new System.Windows.Forms.FlowLayoutPanel();
-            this.lblSelectedColor = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -134,24 +125,13 @@
             this.cmbEndMinute.Location = new System.Drawing.Point(260, 145);
             this.cmbEndMinute.Size = new System.Drawing.Size(48, 23);
             // 
-            // flpColors
-            // 
-            this.flpColors.Location = new System.Drawing.Point(25, 185);
-            this.flpColors.Size = new System.Drawing.Size(240, 40);
-            // 
-            // lblSelectedColor
-            // 
-            this.lblSelectedColor.BackColor = System.Drawing.Color.CornflowerBlue;
-            this.lblSelectedColor.Location = new System.Drawing.Point(280, 190);
-            this.lblSelectedColor.Size = new System.Drawing.Size(30, 30);
-            // 
             // btnSave
             // 
             this.btnSave.BackColor = System.Drawing.Color.CornflowerBlue;
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSave.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold);
             this.btnSave.ForeColor = System.Drawing.Color.White;
-            this.btnSave.Location = new System.Drawing.Point(145, 245);
+            this.btnSave.Location = new System.Drawing.Point(145, 190); // Y좌표 위로 당김
             this.btnSave.Size = new System.Drawing.Size(75, 35);
             this.btnSave.Text = "저장";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
@@ -160,18 +140,17 @@
             // 
             this.btnCancel.BackColor = System.Drawing.Color.LightGray;
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCancel.Location = new System.Drawing.Point(235, 245);
+            this.btnCancel.Location = new System.Drawing.Point(235, 190); // Y좌표 위로 당김
             this.btnCancel.Size = new System.Drawing.Size(75, 35);
             this.btnCancel.Text = "취소";
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
             // AddScheduleForm
             // 
-            this.ClientSize = new System.Drawing.Size(340, 305);
-            this.Controls.Add(this.lblSelectedColor);
+            // 높이를 줄임 (305 -> 240)
+            this.ClientSize = new System.Drawing.Size(340, 240);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnSave);
-            this.Controls.Add(this.flpColors);
             this.Controls.Add(this.cmbEndMinute);
             this.Controls.Add(this.lblEndColon);
             this.Controls.Add(this.cmbEndHour);

@@ -46,4 +46,17 @@ namespace UI_Forms.Models
         [JsonPropertyName("timezone")]
         public string Timezone { get; set; } = "Asia/Seoul"; // API 명세에 따른 기본값
     }
+
+    // 서버 헬스 체크 응답용 모델
+    public class HealthResponse
+    {
+        [JsonPropertyName("status")]
+        public string Status { get; set; }
+
+        [JsonPropertyName("mongodb")]
+        public string Mongodb { get; set; }
+
+        [JsonPropertyName("timestamp")]
+        public string Timestamp { get; set; }
+    }
 }

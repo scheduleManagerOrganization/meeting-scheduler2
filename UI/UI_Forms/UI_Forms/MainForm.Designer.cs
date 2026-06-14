@@ -54,12 +54,12 @@
             this.btnAddAvailability.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnAddAvailability.Font = new System.Drawing.Font("맑은 고딕", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
             this.btnAddAvailability.ForeColor = System.Drawing.Color.White;
-            this.btnAddAvailability.Location = new System.Drawing.Point(820, 16);
+            this.btnAddAvailability.Location = new System.Drawing.Point(848, 16);
             this.btnAddAvailability.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnAddAvailability.Name = "btnAddAvailability";
-            this.btnAddAvailability.Size = new System.Drawing.Size(130, 28);
+            this.btnAddAvailability.Size = new System.Drawing.Size(102, 28);
             this.btnAddAvailability.TabIndex = 7;
-            this.btnAddAvailability.Text = "+ 가용시간 추가";
+            this.btnAddAvailability.Text = "+ 일정 추가";
             this.btnAddAvailability.UseVisualStyleBackColor = false;
             this.btnAddAvailability.Click += new System.EventHandler(this.btnAddAvailability_Click);
             // 
@@ -68,7 +68,7 @@
             this.cmbTeams.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbTeams.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbTeams.Font = new System.Drawing.Font("맑은 고딕", 10F);
-            this.cmbTeams.Location = new System.Drawing.Point(556, 20);
+            this.cmbTeams.Location = new System.Drawing.Point(587, 17);
             this.cmbTeams.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbTeams.Name = "cmbTeams";
             this.cmbTeams.Size = new System.Drawing.Size(140, 25);
@@ -80,7 +80,7 @@
             this.cmbViewType.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbViewType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbViewType.Font = new System.Drawing.Font("맑은 고딕", 10F);
-            this.cmbViewType.Location = new System.Drawing.Point(705, 20);
+            this.cmbViewType.Location = new System.Drawing.Point(736, 17);
             this.cmbViewType.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbViewType.Name = "cmbViewType";
             this.cmbViewType.Size = new System.Drawing.Size(100, 25);

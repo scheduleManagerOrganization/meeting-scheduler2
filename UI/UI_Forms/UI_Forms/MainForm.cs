@@ -49,6 +49,12 @@ namespace UI_Forms
             await RenderCalendarAsync();
         }
 
+        private string FormatTitle(string title)
+        {
+            if (string.IsNullOrWhiteSpace(title)) return "일정";
+            return title.Length > 5 ? title.Substring(0, 5) + "..." : title;
+        }
+
         private void ApplyResponsiveFormSize()
         {
             Rectangle workArea = Screen.FromControl(this).WorkingArea;
@@ -230,9 +236,8 @@ namespace UI_Forms
                     {
                         foreach (var slot in schedule.Slots)
                         {
-                            string displayTitle = string.IsNullOrEmpty(slot.Title)
-                                                ? $"{slot.Start} - {slot.End}"
-                                                : $"[{slot.Title}] {slot.Start} - {slot.End}";
+                            // 변경된 표시 형식: 시작시간 + (5자 생략된) 제목
+                            string displayTitle = $"{slot.Start} {FormatTitle(slot.Title)}";
                             bool isFullBox = slot.Start == "00:00" && slot.End == "23:59";
                             _dayControls[dayIndex].AddScheduleSlot(displayTitle, Color.CornflowerBlue, isFullBox);
                         }
@@ -291,10 +296,8 @@ namespace UI_Forms
                         Color userColor = GetTeamUserColor(item.UserId);
                         RememberTeamLegendUser(item.UserId, item.UserName);
 
-                        // 💡 [개선] 팀 캘린더에서도 일정 제목(Title)이 있으면 보여주도록 변경!
-                        string displayTitle = string.IsNullOrEmpty(item.Slot.Title)
-                                            ? $"[{item.UserName}] {item.Slot.Start} - {item.Slot.End}"
-                                            : $"[{item.UserName}] {item.Slot.Title} ({item.Slot.Start}-{item.Slot.End})";
+                        // 변경된 표시 형식: [이름] 시작시간 + (5자 생략된) 제목
+                        string displayTitle = $"[{item.UserName}] {item.Slot.Start} {FormatTitle(item.Slot.Title)}";
 
                         _dayControls[dayIndex].AddScheduleSlot(displayTitle, userColor, false);
                     }
@@ -390,24 +393,18 @@ namespace UI_Forms
             await RenderCalendarAsync();
         }
 
+        // ---------------------------------------------------------
+        // 1. 일정 추가 버튼 클릭 이벤트 수정
+        // ---------------------------------------------------------
         private async void btnAddAvailability_Click(object sender, EventArgs e)
         {
-            // 기존 AddScheduleForm 대신 새로 만든 AddAvailabilityForm 호출
-            using (AddAvailabilityForm addForm = new AddAvailabilityForm())
+            using (AddScheduleForm addForm = new AddScheduleForm())
             {
                 if (addForm.ShowDialog() == DialogResult.OK)
                 {
-                    await RenderCalendarAsync(); // 다이얼로그 확인 후 꺼지면 자동 새로고침
+                    await RenderCalendarAsync(); // 등록 성공 후 자동 새로고침
                 }
             }
-            // 기존 AddAvailabilityForm대신에 AddScheduleForm 호출.. 
-            //using (AddScheduleForm addForm = new AddScheduleForm())
-            //{
-            //    if (addForm.ShowDialog() == DialogResult.OK)
-            //    {
-            //        await RenderCalendarAsync(); // 등록 성공 후 꺼지면 자동 새로고침
-            //    }
-            //}
         }
 
         private void UpdateCalendarModeUi()

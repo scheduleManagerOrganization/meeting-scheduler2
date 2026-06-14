@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -9,18 +8,12 @@ namespace UI_Forms
 {
     public partial class AddScheduleForm : Form
     {
-        private Color _selectedColor = Color.CornflowerBlue;
-        private readonly List<Color> _availableColors = new List<Color> {
-            Color.CornflowerBlue, Color.MediumSeaGreen, Color.Orange, Color.MediumPurple, Color.Gray
-        };
-
         private const string PlaceholderTitle = "일정 제목을 입력하세요";
 
         public AddScheduleForm()
         {
             InitializeComponent();
             SetupTimeComboBoxes();
-            SetupColorPicker();
             SetupPlaceholder();
 
             dtpStartDate.Value = DateTime.Today;
@@ -49,7 +42,7 @@ namespace UI_Forms
             };
         }
 
-        // 🌟 시간과 분을 따로 세팅하는 메서드
+        // 🌟 시간과 분을 따로 세팅하는 메서드 (5분 단위로 수정)
         private void SetupTimeComboBoxes()
         {
             cmbStartHour.Items.Clear();
@@ -57,7 +50,6 @@ namespace UI_Forms
             cmbStartMinute.Items.Clear();
             cmbEndMinute.Items.Clear();
 
-            // 시간: 00 ~ 23
             for (int h = 0; h < 24; h++)
             {
                 string hourStr = $"{h:D2}";
@@ -65,51 +57,18 @@ namespace UI_Forms
                 cmbEndHour.Items.Add(hourStr);
             }
 
-            // 분: 00, 10, 20, 30, 40, 50 (원하시면 증감값을 1로 하여 1분 단위로도 가능)
-            for (int m = 0; m < 60; m += 10)
+            // 분: 00, 05, 10, 15 ... 55 (5분 단위로 변경)
+            for (int m = 0; m < 60; m += 5)
             {
                 string minuteStr = $"{m:D2}";
                 cmbStartMinute.Items.Add(minuteStr);
                 cmbEndMinute.Items.Add(minuteStr);
             }
 
-            // 기본값 설정 (09:00 ~ 10:00)
             cmbStartHour.SelectedIndex = 9;   // 09시
             cmbStartMinute.SelectedIndex = 0; // 00분
             cmbEndHour.SelectedIndex = 10;    // 10시
             cmbEndMinute.SelectedIndex = 0;   // 00분
-        }
-
-        private void SetupColorPicker()
-        {
-            foreach (var color in _availableColors)
-            {
-                Button btnColor = new Button
-                {
-                    Size = new Size(30, 30),
-                    BackColor = color,
-                    FlatStyle = FlatStyle.Flat,
-                    Cursor = Cursors.Hand,
-                    Tag = color
-                };
-                btnColor.FlatAppearance.BorderSize = 0;
-                btnColor.Click += (s, e) => {
-                    _selectedColor = (Color)((Button)s).Tag;
-                    lblSelectedColor.BackColor = _selectedColor;
-                };
-                flpColors.Controls.Add(btnColor);
-            }
-
-            Button btnRedDisabled = new Button
-            {
-                Size = new Size(30, 30),
-                BackColor = Color.LightCoral,
-                FlatStyle = FlatStyle.Flat,
-                Enabled = false,
-                Text = "X",
-                ForeColor = Color.White
-            };
-            flpColors.Controls.Add(btnRedDisabled);
         }
 
         private async void btnSave_Click(object sender, EventArgs e)
@@ -120,7 +79,6 @@ namespace UI_Forms
                 return;
             }
 
-            // 🌟 콤보박스의 시, 분 텍스트를 합쳐서 시간 문자열(HH:mm) 생성
             string startSlot = $"{cmbStartHour.Text}:{cmbStartMinute.Text}";
             string endSlot = $"{cmbEndHour.Text}:{cmbEndMinute.Text}";
 
@@ -151,7 +109,7 @@ namespace UI_Forms
                     {
                         userId = ApiService.CurrentUserId,
                         date = current.ToString("yyyy-MM-dd"),
-                        slots = new[] { new { title = txtTitle.Text, start = slotStart, end = slotEnd } } // title 추가
+                        slots = new[] { new { title = txtTitle.Text, start = slotStart, end = slotEnd } }
                     };
 
                     var response = await ApiService.PostAsync<object, ApiResponse<object>>("/api/availability", request);

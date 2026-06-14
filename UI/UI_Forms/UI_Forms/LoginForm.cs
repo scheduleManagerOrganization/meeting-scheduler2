@@ -1,6 +1,7 @@
-﻿using UI_Forms.Models;
-using System;
+﻿using System;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using UI_Forms.Models;
 
 namespace UI_Forms
 {
@@ -9,6 +10,35 @@ namespace UI_Forms
         public LoginForm()
         {
             InitializeComponent();
+
+            // 폼 로드 이벤트 연결
+            this.Load += LoginForm_Load;
+        }
+
+        private async void LoginForm_Load(object sender, EventArgs e)
+        {
+            // 프로그램 시작과 함께 서버 상태 확인
+            await CheckServerStatusAsync();
+        }
+
+        private async Task CheckServerStatusAsync()
+        {
+            try
+            {
+                // ApiService를 통해 /health 엔드포인트 호출
+                var response = await ApiService.GetAsync<HealthResponse>("/health");
+
+                // 정상적이면 아무 작업도 하지 않고 넘어감 (Silent)
+                if (response == null || response.Status != "healthy")
+                {
+                    MessageBox.Show("서버 상태가 불안정합니다. 잠시 후 다시 시도해 주세요.", "서버 상태 알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception)
+            {
+                // 통신 실패 (서버가 닫혀 있거나 깨어나는 데 실패함)
+                MessageBox.Show("서버와 연결할 수 없습니다.\n백엔드 서버가 구동 중인지 확인해 주세요.", "서버 연결 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private async void btnLogin_Click(object sender, EventArgs e)
