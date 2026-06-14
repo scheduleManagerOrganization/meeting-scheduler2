@@ -234,12 +234,26 @@ namespace UI_Forms
 
                     if (schedule.Slots != null)
                     {
+                        // MainForm.cs -> FetchAndRenderPersonalSchedulesRangeAsync 내부
+
                         foreach (var slot in schedule.Slots)
                         {
-                            // 변경된 표시 형식: 시작시간 + (5자 생략된) 제목
                             string displayTitle = $"{slot.Start} {FormatTitle(slot.Title)}";
                             bool isFullBox = slot.Start == "00:00" && slot.End == "23:59";
-                            _dayControls[dayIndex].AddScheduleSlot(displayTitle, Color.CornflowerBlue, isFullBox);
+
+                            // 🌟 클릭 시 모달 폼을 띄우는 Action 콜백 추가
+                            _dayControls[dayIndex].AddScheduleSlot(displayTitle, Color.CornflowerBlue, isFullBox, () =>
+                            {
+                                // 1. 개인 일정이므로 teamId는 null로 넘김
+                                using (var detailForm = new ScheduleDetailForm(scheduleDate, slot, null))
+                                {
+                                    if (detailForm.ShowDialog() == DialogResult.OK)
+                                    {
+                                        // 2. 삭제 성공 시 달력 다시 그리기
+                                        _ = RenderCalendarAsync();
+                                    }
+                                }
+                            });
                         }
                     }
                 }
@@ -291,15 +305,29 @@ namespace UI_Forms
                         .ThenByDescending(item => ToMinutes(item.Slot.End))
                         .ToList();
 
+                    // MainForm.cs -> FetchAndRenderTeamSchedulesRangeAsync 내부
+
                     foreach (var item in teamSlots)
                     {
                         Color userColor = GetTeamUserColor(item.UserId);
                         RememberTeamLegendUser(item.UserId, item.UserName);
 
-                        // 변경된 표시 형식: [이름] 시작시간 + (5자 생략된) 제목
                         string displayTitle = $"[{item.UserName}] {item.Slot.Start} {FormatTitle(item.Slot.Title)}";
 
-                        _dayControls[dayIndex].AddScheduleSlot(displayTitle, userColor, false);
+                        // 🌟 클릭 시 모달 폼을 띄우는 Action 콜백 추가
+                        _dayControls[dayIndex].AddScheduleSlot(displayTitle, userColor, false, () =>
+                        {
+                            // 팀 일정이므로 현재 선택된 teamId를 넘김
+                            using (var detailForm = new ScheduleDetailForm(scheduleDate, item.Slot, selectedTeamId))
+                            {
+                                // 💡 주의: 현재 ScheduleDetailForm 로직은 로그인한 유저(CurrentUserId)의 일정만 지울 수 있게 되어 있습니다.
+                                // 타인의 일정을 삭제하려고 하면 서버 구조상 본인 일정에서 찾지 못해 무시되므로 안전합니다.
+                                if (detailForm.ShowDialog() == DialogResult.OK)
+                                {
+                                    _ = RenderCalendarAsync();
+                                }
+                            }
+                        });
                     }
                 }
             }
