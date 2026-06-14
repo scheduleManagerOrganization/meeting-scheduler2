@@ -17,6 +17,10 @@ namespace UI_Forms
         private int _renderVersion = 0;
         private readonly Dictionary<string, Color> _teamUserColors = new Dictionary<string, Color>();
         private readonly Dictionary<string, string> _teamUserNames = new Dictionary<string, string>();
+        private const int PersonalClientWidth = 970;
+        private const int TeamClientWidth = 1270;
+        private const int FormPadding = 20;
+        private const int SidebarGap = 20;
         private readonly Color[] _teamColorPalette = new[]
         {
             Color.CornflowerBlue, Color.MediumSeaGreen, Color.Orange,
@@ -396,6 +400,8 @@ namespace UI_Forms
         {
             string userName = ApiService.CurrentUserName ?? "사용자";
 
+            ApplyCalendarModeSize();
+
             cmbTeams.Visible = _isTeamCalendar;
             tlpTeamLegend.Visible = _isTeamCalendar;
             btnCreateTeam.Visible = _isTeamCalendar;
@@ -420,16 +426,14 @@ namespace UI_Forms
                 lblTitle.Text = $"{userName}님의 개인 캘린더";
                 tlpTeamLegend.Controls.Clear();
             }
-            // 🌟 [추가된 부분] 팀 캘린더일 때 우측으로 폼 확장
+
             if (_isTeamCalendar)
             {
-                this.Width = 1290; // 원래 Width(약 986)에서 우측 사이드바(280)만큼 확장
                 flpMeetingSidebar.Visible = true;
                 _ = LoadAndRenderTeamMeetingsAsync(); // 미팅 목록 불러오기
             }
             else
             {
-                this.Width = 986; // 개인 캘린더일 때 축소
                 flpMeetingSidebar.Visible = false;
             }
         }
@@ -531,12 +535,21 @@ namespace UI_Forms
             int legendGap = 8;
             int legendHeight = 82;
 
-            pnlCalendar.Width = this.ClientSize.Width - (pnlCalendar.Left * 2);
-
             if (_isTeamCalendar)
             {
+                flpMeetingSidebar.Location = new Point(
+                    this.ClientSize.Width - flpMeetingSidebar.Width - FormPadding,
+                    pnlCalendar.Top
+                );
+
+                pnlCalendar.Width = Math.Max(
+                    700,
+                    flpMeetingSidebar.Left - pnlCalendar.Left - SidebarGap
+                );
+
                 int calendarHeight = this.ClientSize.Height - pnlCalendar.Top - legendGap - legendHeight - bottomPadding;
                 pnlCalendar.Height = Math.Max(420, calendarHeight);
+                flpMeetingSidebar.Height = pnlCalendar.Height;
 
                 // 범례 너비 분할 (팀 범례 75%, 미팅 범례 25%)
                 int totalLegendWidth = pnlCalendar.Width;
@@ -550,10 +563,21 @@ namespace UI_Forms
             }
             else
             {
+                pnlCalendar.Width = this.ClientSize.Width - (pnlCalendar.Left * 2);
                 int calendarHeight = this.ClientSize.Height - pnlCalendar.Top - bottomPadding;
                 pnlCalendar.Height = Math.Max(500, calendarHeight);
                 tlpTeamLegend.Location = new Point(pnlCalendar.Left, pnlCalendar.Bottom + legendGap);
                 tlpTeamLegend.Size = new Size(pnlCalendar.Width, legendHeight);
+            }
+        }
+
+        private void ApplyCalendarModeSize()
+        {
+            int targetWidth = _isTeamCalendar ? TeamClientWidth : PersonalClientWidth;
+            if (this.ClientSize.Width != targetWidth)
+            {
+                this.ClientSize = new Size(targetWidth, this.ClientSize.Height);
+                this.CenterToScreen();
             }
         }
 
