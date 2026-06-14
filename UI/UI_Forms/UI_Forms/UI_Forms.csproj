@@ -127,6 +127,9 @@
     <EmbeddedResource Include="AddAvailabilityForm.resx">
       <DependentUpon>AddAvailabilityForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="AddScheduleForm.resx">
+      <DependentUpon>AddScheduleForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="LoginForm.resx">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </EmbeddedResource>
