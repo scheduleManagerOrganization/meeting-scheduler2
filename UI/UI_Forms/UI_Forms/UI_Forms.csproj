@@ -86,6 +86,12 @@
     <Compile Include="AddAvailabilityForm.Designer.cs">
       <DependentUpon>AddAvailabilityForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="AddMeetingForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddMeetingForm.Designer.cs">
+      <DependentUpon>AddMeetingForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="AddScheduleForm.cs">
       <SubType>Form</SubType>
     </Compile>

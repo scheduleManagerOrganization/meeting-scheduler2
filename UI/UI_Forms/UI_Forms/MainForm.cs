@@ -35,7 +35,6 @@ namespace UI_Forms
             lblTitle.Text = $"{userName}님의 개인 캘린더";
             ApplyResponsiveFormSize();
 
-            // 뷰 타입 초기화
             cmbViewType.SelectedIndexChanged -= cmbViewType_SelectedIndexChanged;
             cmbViewType.Items.Clear();
             cmbViewType.Items.Add("월간 뷰");
@@ -53,6 +52,17 @@ namespace UI_Forms
         {
             if (string.IsNullOrWhiteSpace(title)) return "일정";
             return title.Length > 5 ? title.Substring(0, 5) + "..." : title;
+        }
+
+        // 🌟 향후 미팅 데이터 렌더링 시 사용할 접두사 포맷터
+        private string FormatMeetingTitle(string title, string responseStatus)
+        {
+            string prefix = "!"; // 기본 미응답
+            if (responseStatus?.ToLower() == "yes") prefix = "✓";
+            else if (responseStatus?.ToLower() == "no") prefix = "X";
+
+            string formattedTitle = FormatTitle(title);
+            return $"[{prefix}] {formattedTitle}";
         }
 
         private void ApplyResponsiveFormSize()
@@ -144,7 +154,6 @@ namespace UI_Forms
         {
             try
             {
-                string userId = ApiService.CurrentUserId;
                 if (_isTeamCalendar) _teamUserNames.Clear();
 
                 if (_isTeamCalendar)
@@ -214,7 +223,7 @@ namespace UI_Forms
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ FetchAndRenderPersonalSchedulesRangeAsync 오류: {ex.Message}");
+                Console.WriteLine($"FetchAndRenderPersonalSchedulesRangeAsync 오류: {ex.Message}");
             }
         }
 
@@ -260,7 +269,6 @@ namespace UI_Forms
                         Color userColor = GetTeamUserColor(item.UserId);
                         RememberTeamLegendUser(item.UserId, item.UserName);
 
-                        // 🌟 수정된 부분: 이름은 빼고 시작시간 - 종료시간만 깔끔하게 표시
                         string displayTitle = $"{item.Slot.Start} - {item.Slot.End}";
 
                         _dayControls[dayIndex].AddScheduleSlot(displayTitle, userColor, false, () =>
@@ -275,10 +283,13 @@ namespace UI_Forms
                         });
                     }
                 }
+
+                // TODO: 향후 GET /api/meetings/team/{teamId} 를 호출하여 
+                // Color.Crimson 색상과 FormatMeetingTitle()을 사용하여 미팅 일정을 _dayControls에 추가하는 로직 구현
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ FetchAndRenderTeamSchedulesRangeAsync 오류: {ex.Message}");
+                Console.WriteLine($"FetchAndRenderTeamSchedulesRangeAsync 오류: {ex.Message}");
             }
         }
 
@@ -330,14 +341,12 @@ namespace UI_Forms
             }
         }
 
-        // 🌟 팀 생성 폼 호출 (모달)
         private async void btnCreateTeam_Click(object sender, EventArgs e)
         {
             using (var createTeamForm = new CreateTeamForm())
             {
                 if (createTeamForm.ShowDialog() == DialogResult.OK)
                 {
-                    // 팀 생성 후 내 팀 목록 새로고침
                     await LoadUserTeamsAsync();
                     UpdateCalendarModeUi();
                     await RenderCalendarAsync();
@@ -345,16 +354,39 @@ namespace UI_Forms
             }
         }
 
-        // 🌟 팀 참가 버튼 클릭 (모달 연동 및 새로고침 적용)
         private async void btnJoinTeam_Click(object sender, EventArgs e)
         {
             using (var form = new JoinTeamForm())
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    // 참가 성공 시 기존 임시 메서드 대신 실제 구현된 새로고침 로직 호출
                     await LoadUserTeamsAsync();
                     UpdateCalendarModeUi();
+                    await RenderCalendarAsync();
+                }
+            }
+        }
+
+        // 🌟 팀 미팅 추가 버튼 클릭 이벤트
+        private async void btnAddMeeting_Click(object sender, EventArgs e)
+        {
+            // 1. 현재 콤보박스에서 선택된 팀 ID 가져오기
+            string currentTeamId = cmbTeams.SelectedValue?.ToString();
+
+            if (string.IsNullOrEmpty(currentTeamId))
+            {
+                MessageBox.Show("미팅을 추가할 팀을 먼저 선택해주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 2. AddMeetingForm을 모달로 띄우기 (teamId 전달)
+            using (var addMeetingForm = new AddMeetingForm(currentTeamId))
+            {
+                var result = addMeetingForm.ShowDialog();
+
+                // 3. 폼에서 '저장'이 성공하여 DialogResult.OK가 반환되었다면 캘린더 새로고침
+                if (result == DialogResult.OK)
+                {
                     await RenderCalendarAsync();
                 }
             }
@@ -364,11 +396,14 @@ namespace UI_Forms
         {
             string userName = ApiService.CurrentUserName ?? "사용자";
 
-            // 팀 선택 콤보박스와 팀 생성/참가 버튼을 팀 캘린더 모드에서만 보이게 처리
             cmbTeams.Visible = _isTeamCalendar;
             tlpTeamLegend.Visible = _isTeamCalendar;
-            btnCreateTeam.Visible = _isTeamCalendar; // 팀 생성 버튼 가시성 제어
-            btnJoinTeam.Visible = _isTeamCalendar;   // 팀 참가 버튼 가시성 제어
+            btnCreateTeam.Visible = _isTeamCalendar;
+            btnJoinTeam.Visible = _isTeamCalendar;
+
+            // 미팅 관련 컨트롤 가시성
+            btnAddMeeting.Visible = _isTeamCalendar;
+            pnlMeetingLegend.Visible = _isTeamCalendar;
 
             UpdateCalendarAreaSize();
             btnCalendarMode.Text = _isTeamCalendar ? "개인 캘린더" : "팀 캘린더";
@@ -394,14 +429,21 @@ namespace UI_Forms
             int legendHeight = 82;
 
             pnlCalendar.Width = this.ClientSize.Width - (pnlCalendar.Left * 2);
-            tlpTeamLegend.Width = pnlCalendar.Width;
 
             if (_isTeamCalendar)
             {
                 int calendarHeight = this.ClientSize.Height - pnlCalendar.Top - legendGap - legendHeight - bottomPadding;
                 pnlCalendar.Height = Math.Max(420, calendarHeight);
+
+                // 범례 너비 분할 (팀 범례 75%, 미팅 범례 25%)
+                int totalLegendWidth = pnlCalendar.Width;
+                int meetingLegendWidth = 180;
+
                 tlpTeamLegend.Location = new Point(pnlCalendar.Left, pnlCalendar.Bottom + legendGap);
-                tlpTeamLegend.Size = new Size(pnlCalendar.Width, legendHeight);
+                tlpTeamLegend.Size = new Size(totalLegendWidth - meetingLegendWidth - 10, legendHeight);
+
+                pnlMeetingLegend.Location = new Point(tlpTeamLegend.Right + 10, pnlCalendar.Bottom + legendGap);
+                pnlMeetingLegend.Size = new Size(meetingLegendWidth, legendHeight);
             }
             else
             {
@@ -419,7 +461,6 @@ namespace UI_Forms
             {
                 _teamUserColors[key] = _teamColorPalette[_teamUserColors.Count % _teamColorPalette.Length];
             }
-
             return _teamUserColors[key];
         }
 
@@ -478,7 +519,7 @@ namespace UI_Forms
             {
                 Text = userName,
                 Location = new Point(48, 4),
-                Size = new Size(280, 20),
+                Size = new Size(200, 20),
                 AutoEllipsis = true,
                 Font = new Font("맑은 고딕", 9F, FontStyle.Regular),
                 ForeColor = Color.DimGray
@@ -491,12 +532,8 @@ namespace UI_Forms
 
         private int ToMinutes(string time)
         {
-            TimeSpan parsed;
-            if (TimeSpan.TryParse(time, out parsed))
-            {
+            if (TimeSpan.TryParse(time, out TimeSpan parsed))
                 return (int)parsed.TotalMinutes;
-            }
-
             return 0;
         }
     }
