@@ -202,6 +202,10 @@ namespace UI_Forms
         // 📌 새 메서드: 개인 캘린더 범위 조회
         private async Task FetchAndRenderPersonalSchedulesRangeAsync(DateTime startDate, int totalDays, int renderVersion)
         {
+            System.Diagnostics.Debug.WriteLine($"=============================");
+            System.Diagnostics.Debug.WriteLine($"🚀 캘린더 렌더링 파이프라인 진입 성공!");
+            System.Diagnostics.Debug.WriteLine($"현재 모드 -> 팀 캘린더: {_isTeamCalendar}, 버전: {renderVersion}");
+            System.Diagnostics.Debug.WriteLine($"=============================");
             try
             {
                 string userId = ApiService.CurrentUserId;
@@ -210,9 +214,10 @@ namespace UI_Forms
                 var response = await ApiService.GetAsync<ApiResponse<RangeScheduleData>>(
                     $"/api/availability/{userId}/range?startDate={startDateStr}&days={totalDays}"
                 );
-
+                
                 if (renderVersion != _renderVersion) return;
                 if (response?.Success != true || response.Data?.Schedules == null) return;
+
 
                 foreach (var schedule in response.Data.Schedules)
                 {
@@ -387,22 +392,22 @@ namespace UI_Forms
 
         private async void btnAddAvailability_Click(object sender, EventArgs e)
         {
-            //// 기존 AddScheduleForm 대신 새로 만든 AddAvailabilityForm 호출
-            //using (AddAvailabilityForm addForm = new AddAvailabilityForm())
-            //{
-            //    if (addForm.ShowDialog() == DialogResult.OK)
-            //    {
-            //        await RenderCalendarAsync(); // 다이얼로그 확인 후 꺼지면 자동 새로고침
-            //    }
-            //}
-            // 기존 AddAvailabilityForm대신에 AddScheduleForm 호출.. 
-            using (AddScheduleForm addForm = new AddScheduleForm())
+            // 기존 AddScheduleForm 대신 새로 만든 AddAvailabilityForm 호출
+            using (AddAvailabilityForm addForm = new AddAvailabilityForm())
             {
                 if (addForm.ShowDialog() == DialogResult.OK)
                 {
-                    await RenderCalendarAsync(); // 등록 성공 후 꺼지면 자동 새로고침
+                    await RenderCalendarAsync(); // 다이얼로그 확인 후 꺼지면 자동 새로고침
                 }
             }
+            // 기존 AddAvailabilityForm대신에 AddScheduleForm 호출.. 
+            //using (AddScheduleForm addForm = new AddScheduleForm())
+            //{
+            //    if (addForm.ShowDialog() == DialogResult.OK)
+            //    {
+            //        await RenderCalendarAsync(); // 등록 성공 후 꺼지면 자동 새로고침
+            //    }
+            //}
         }
 
         private void UpdateCalendarModeUi()
