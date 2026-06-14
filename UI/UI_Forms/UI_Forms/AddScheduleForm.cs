@@ -72,7 +72,6 @@ namespace UI_Forms
             cmbEndMinute.SelectedIndex = 0;
         }
 
-        // 🌟 반복 컨트롤 초기화 로직 추가
         private void SetupRecurrenceControls()
         {
             cmbRecurType.Items.AddRange(new string[] { "일", "주", "월", "년" });
@@ -157,7 +156,7 @@ namespace UI_Forms
                         case "일": currentStart = currentStart.AddDays(interval); currentEnd = currentEnd.AddDays(interval); break;
                         case "주": currentStart = currentStart.AddDays(interval * 7); currentEnd = currentEnd.AddDays(interval * 7); break;
                         case "월": currentStart = currentStart.AddMonths(interval); currentEnd = currentEnd.AddMonths(interval); break;
-                        case "연": currentStart = currentStart.AddYears(interval); currentEnd = currentEnd.AddYears(interval); break;
+                        case "년": currentStart = currentStart.AddYears(interval); currentEnd = currentEnd.AddYears(interval); break;
                     }
                 }
             }
@@ -171,7 +170,6 @@ namespace UI_Forms
             {
                 List<Task<bool>> saveTasks = new List<Task<bool>>();
 
-                // 기존의 자정 쪼개기 로직을 유지하면서 Task 리스트에 담기
                 foreach (var block in scheduleBlocks)
                 {
                     DateTime current = block.start.Date;
@@ -184,19 +182,14 @@ namespace UI_Forms
 
                         if (slotStart == slotEnd) { current = current.AddDays(1); continue; }
 
-                        var request = new
-                        {
-                            user_id = ApiService.CurrentUserId, // 명세서에 맞춤 (user_id)
-                            date = current.ToString("yyyy-MM-dd"),
-                            slots = new[] { new { title = txtTitle.Text, start = slotStart, end = slotEnd } }
-                        };
+                        string dateStr = current.ToString("yyyy-MM-dd");
 
-                        saveTasks.Add(SaveSingleSlotAsync(request));
+                        // 🌟 변경점: 통째로 request 객체를 넘기지 않고 필요한 변수들을 각각 전달합니다.
+                        saveTasks.Add(SaveSingleSlotAsync(ApiService.CurrentUserId, dateStr, txtTitle.Text, slotStart, slotEnd));
                         current = current.AddDays(1);
                     }
                 }
 
-                // 🌟 모든 API 요청을 일괄 대기
                 bool[] results = await Task.WhenAll(saveTasks);
 
                 if (results.Length > 0 && results.All(r => r == true))
@@ -220,13 +213,48 @@ namespace UI_Forms
             }
         }
 
-        // 개별 통신 헬퍼 메서드
-        private async Task<bool> SaveSingleSlotAsync(object request)
+        // 🌟 변경점: 기존 일정 GET -> 합치기 -> POST(덮어쓰기) 로직으로 전면 교체
+        private async Task<bool> SaveSingleSlotAsync(string userId, string dateStr, string title, string start, string end)
         {
             try
             {
-                var response = await ApiService.PostAsync<object, ApiResponse<object>>("/api/availability", request);
-                return response != null && response.Success;
+                List<object> mergedSlots = new List<object>();
+
+                // 1단계: 기존 일정 불러오기 (GET)
+                // (Models에 정의된 AvailabilityData의 이름이 다르다면 프로젝트에 맞게 수정해 주세요)
+                var getResponse = await ApiService.GetAsync<ApiResponse<AvailabilityData>>($"/api/availability/{userId}/{dateStr}");
+
+                if (getResponse != null && getResponse.Success && getResponse.Data != null && getResponse.Data.Slots != null)
+                {
+                    foreach (var existingSlot in getResponse.Data.Slots)
+                    {
+                        mergedSlots.Add(new
+                        {
+                            title = existingSlot.Title,
+                            start = existingSlot.Start,
+                            end = existingSlot.End
+                        });
+                    }
+                }
+
+                // 2단계: 새 일정 끼워 넣기
+                mergedSlots.Add(new
+                {
+                    title = title,
+                    start = start,
+                    end = end
+                });
+
+                // 3단계: 통째로 다시 덮어쓰기 (POST)
+                var payload = new
+                {
+                    user_id = userId,
+                    date = dateStr,
+                    slots = mergedSlots // 병합된 리스트 전송
+                };
+
+                var postResponse = await ApiService.PostAsync<object, ApiResponse<object>>("/api/availability", payload);
+                return postResponse != null && postResponse.Success;
             }
             catch
             {
