@@ -3,8 +3,10 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace MeetingScheduler.Models;
 
-public class TimeSlot
+public class TimeSlot // 기존 가용시간 슬롯에서 개인 일정 슬롯으로 변경
 {
+
+    public string Title { get; set; } = string.Empty; // 일정 타이틀
     public string Start { get; set; } = string.Empty;
     public string End { get; set; } = string.Empty;
 }

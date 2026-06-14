@@ -4,6 +4,9 @@ namespace MeetingScheduler.DTOs;
 
 public class TimeSlotDto
 {
+    [JsonPropertyName("title")]
+    public string Title { get; set; } = string.Empty;
+
     [JsonPropertyName("start")]
     public string Start { get; set; } = string.Empty;
     

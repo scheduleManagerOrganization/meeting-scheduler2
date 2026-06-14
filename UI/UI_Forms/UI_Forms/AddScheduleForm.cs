@@ -151,7 +151,7 @@ namespace UI_Forms
                     {
                         userId = ApiService.CurrentUserId,
                         date = current.ToString("yyyy-MM-dd"),
-                        slots = new[] { new { start = slotStart, end = slotEnd } }
+                        slots = new[] { new { title = txtTitle.Text, start = slotStart, end = slotEnd } } // title 추가
                     };
 
                     var response = await ApiService.PostAsync<object, ApiResponse<object>>("/api/availability", request);

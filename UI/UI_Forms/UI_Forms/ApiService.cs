@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace UI_Forms
@@ -15,7 +16,8 @@ namespace UI_Forms
         private static readonly HttpClient _httpClient = new HttpClient();
 
         // 2. 테스트 로그에서 확인된 실제 작동하는 Base URL
-        private const string BaseUrl = "https://meeting-scheduler-csharp.onrender.com";
+        //private const string BaseUrl = "https://meeting-scheduler-csharp.onrender.com";
+        private const string BaseUrl = "https://meeting-scheduler-csharp-1zpz.onrender.com";
 
         // 3. 전역 상태 변수 (로그인 후 저장)
         public static string JwtToken { get; private set; } = string.Empty;

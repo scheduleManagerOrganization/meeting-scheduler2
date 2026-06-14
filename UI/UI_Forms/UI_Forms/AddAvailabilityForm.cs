@@ -23,14 +23,33 @@ namespace UI_Forms
         }
 
         private List<TimeSlotRow> _rows = new List<TimeSlotRow>();
+        //추가한부분
+        private const string PlaceholderTitle = "일정 제목을 입력하세요"; // 💡 플레이스홀더 추가
 
         public AddAvailabilityForm()
         {
             InitializeComponent();
 
+            SetupPlaceholder(); // 💡새로 추가한 부분 : 제목 플레이스홀더 작동
+
             // 폼이 켜질 때 기본으로 1개의 세트를 무조건 추가해 둡니다.
             AddNewTimeSlotRow();
         }
+
+        // 💡 추가: 일정 제목 텍스트박스(txtTitle) 가이드 레이블 효과
+        private void SetupPlaceholder()
+        {
+            txtTitle.Text = PlaceholderTitle;
+            txtTitle.ForeColor = Color.Gray;
+
+            txtTitle.Enter += (s, e) => {
+                if (txtTitle.Text == PlaceholderTitle) { txtTitle.Text = ""; txtTitle.ForeColor = Color.Black; }
+            };
+            txtTitle.Leave += (s, e) => {
+                if (string.IsNullOrWhiteSpace(txtTitle.Text)) { txtTitle.Text = PlaceholderTitle; txtTitle.ForeColor = Color.Gray; }
+            };
+        }
+
 
         // 🌟 [+] 버튼 클릭 시 새로운 세트를 아래에 추가
         private void btnAddRow_Click(object sender, EventArgs e)
@@ -106,6 +125,14 @@ namespace UI_Forms
 
         private async void btnSave_Click(object sender, EventArgs e)
         {
+            //새로 추가한 부분 : title 검증
+            if (string.IsNullOrWhiteSpace(txtTitle.Text) || txtTitle.Text == PlaceholderTitle)
+            {
+                MessageBox.Show("일정 제목을 입력해주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+
             // 모든 세트의 시간들을 날짜별로 묶어줄 딕셔너리
             var groupedSlots = new Dictionary<string, List<object>>();
 
@@ -141,7 +168,7 @@ namespace UI_Forms
                         string dateStr = current.ToString("yyyy-MM-dd");
                         if (!groupedSlots.ContainsKey(dateStr)) groupedSlots[dateStr] = new List<object>();
 
-                        groupedSlots[dateStr].Add(new { start = currentStart, end = currentEnd });
+                        groupedSlots[dateStr].Add(new { title = txtTitle.Text, start = currentStart, end = currentEnd });
                     }
                     current = current.AddDays(1);
                 }
@@ -190,5 +217,15 @@ namespace UI_Forms
         }
 
         private void btnCancel_Click(object sender, EventArgs e) => this.Close();
+
+        private void AddAvailabilityForm_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtTitle_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }
