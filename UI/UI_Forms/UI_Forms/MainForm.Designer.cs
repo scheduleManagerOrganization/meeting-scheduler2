@@ -273,7 +273,7 @@
             this.lblLegendNotResponded.Location = new System.Drawing.Point(120, 26);
             this.lblLegendNotResponded.Name = "lblLegendNotResponded";
             this.lblLegendNotResponded.Size = new System.Drawing.Size(63, 15);
-            this.lblLegendNotResponded.Text = "! : 미응답";
+            this.lblLegendNotResponded.Text = "! : 미정";
 
             // 
             // btnAddMeeting (미팅 추가)

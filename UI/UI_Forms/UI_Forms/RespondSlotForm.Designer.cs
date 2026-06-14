@@ -29,9 +29,9 @@
             this.lblHeader.Font = new System.Drawing.Font("맑은 고딕", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
             this.lblHeader.Location = new System.Drawing.Point(20, 20);
             this.lblHeader.Name = "lblHeader";
-            this.lblHeader.Size = new System.Drawing.Size(230, 21);
+            this.lblHeader.Size = new System.Drawing.Size(253, 21);
             this.lblHeader.TabIndex = 0;
-            this.lblHeader.Text = "가능한 시간대를 선택해주세요";
+            this.lblHeader.Text = "시간대별 참석 여부를 선택해주세요";
             // 
             // flpSlots
             // 

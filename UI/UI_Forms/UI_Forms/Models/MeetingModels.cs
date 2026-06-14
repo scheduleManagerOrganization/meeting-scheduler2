@@ -49,5 +49,27 @@ namespace UI_Forms.Models
 
         [JsonPropertyName("aiScore")]
         public double AiScore { get; set; }
+
+        [JsonPropertyName("responses")]
+        public System.Collections.Generic.List<SlotResponseDto> Responses { get; set; }
+    }
+
+    public class SlotResponseDto
+    {
+        [JsonPropertyName("userId")]
+        public string UserId { get; set; }
+
+        [JsonPropertyName("user_id")]
+        public string UserIdSnakeCase
+        {
+            get { return UserId; }
+            set { UserId = value; }
+        }
+
+        [JsonPropertyName("response")]
+        public string Response { get; set; }
+
+        [JsonPropertyName("respondedAt")]
+        public DateTime RespondedAt { get; set; }
     }
 }

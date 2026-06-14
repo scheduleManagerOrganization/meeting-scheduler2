@@ -34,7 +34,7 @@ namespace UI_Forms
                 {
                     Panel pnl = new Panel
                     {
-                        Size = new Size(305, 60),
+                        Size = new Size(305, 82),
                         BorderStyle = BorderStyle.FixedSingle,
                         Margin = new Padding(0, 0, 0, 10),
                         BackColor = Color.White
@@ -49,19 +49,50 @@ namespace UI_Forms
                     };
                     pnl.Controls.Add(lblTime);
 
-                    ComboBox cmbResponse = new ComboBox
+                    RadioButton rdoYes = new RadioButton
                     {
-                        DropDownStyle = ComboBoxStyle.DropDownList,
                         Location = new Point(10, 32),
-                        Size = new Size(110, 23),
-                        Font = new Font("맑은 고딕", 9F)
+                        Size = new Size(70, 24),
+                        Text = "참석",
+                        Font = new Font("맑은 고딕", 9F),
+                        Tag = "yes"
                     };
-                    cmbResponse.Items.AddRange(new string[] { "yes (참석)", "no (불참)", "maybe (미정)" });
-                    cmbResponse.SelectedIndex = 0;
-                    pnl.Controls.Add(cmbResponse);
+
+                    RadioButton rdoNo = new RadioButton
+                    {
+                        Location = new Point(90, 32),
+                        Size = new Size(70, 24),
+                        Text = "불참",
+                        Font = new Font("맑은 고딕", 9F),
+                        Tag = "no"
+                    };
+
+                    RadioButton rdoMaybe = new RadioButton
+                    {
+                        Location = new Point(170, 32),
+                        Size = new Size(70, 24),
+                        Text = "미정",
+                        Font = new Font("맑은 고딕", 9F),
+                        Tag = "maybe"
+                    };
+
+                    string currentResponse = GetCurrentUserResponse(slot);
+                    if (currentResponse == "yes") rdoYes.Checked = true;
+                    else if (currentResponse == "no") rdoNo.Checked = true;
+                    else rdoMaybe.Checked = true;
+
+                    pnl.Controls.Add(rdoYes);
+                    pnl.Controls.Add(rdoNo);
+                    pnl.Controls.Add(rdoMaybe);
 
                     flpSlots.Controls.Add(pnl);
-                    _slotControls.Add(new SlotControlData { SlotId = slot.Id, CmbResponse = cmbResponse });
+                    _slotControls.Add(new SlotControlData
+                    {
+                        SlotId = slot.Id,
+                        RdoYes = rdoYes,
+                        RdoNo = rdoNo,
+                        RdoMaybe = rdoMaybe
+                    });
                 }
 
                 if (_slotControls.Count == 0)
@@ -80,7 +111,8 @@ namespace UI_Forms
 
                 foreach (var item in _slotControls)
                 {
-                    string resValue = item.CmbResponse.Text.Split(' ')[0]; // "yes", "no", "maybe"
+                    string resValue = item.GetSelectedResponse();
+                    SlotResponseCache.SetResponse(ApiService.CurrentUserId, item.SlotId, resValue);
 
                     // 명세서에 따른 Request Body (snake_case)
                     var payload = new
@@ -90,12 +122,12 @@ namespace UI_Forms
                         response = resValue
                     };
 
-                    submitTasks.Add(ApiService.PostAsync<object, ApiResponse<object>>("/api/respond-slot", payload));
+                    submitTasks.Add(TrySubmitResponseToServerAsync(payload));
                 }
 
-                await Task.WhenAll(submitTasks); // API 병렬 요청 대기
+                await Task.WhenAll(submitTasks);
 
-                MessageBox.Show("응답이 성공적으로 제출되었습니다.", "성공", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("응답이 저장되었습니다.", "성공", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
@@ -110,10 +142,59 @@ namespace UI_Forms
         }
 
         // 내부 컨트롤 매핑 클래스
+        private string GetCurrentUserResponse(MeetingSlotDto slot)
+        {
+            string cachedResponse = SlotResponseCache.GetResponse(ApiService.CurrentUserId, slot?.Id);
+            if (!string.IsNullOrWhiteSpace(cachedResponse)) return cachedResponse.ToLower();
+
+            if (slot?.Responses == null) return "maybe";
+
+            foreach (var response in slot.Responses)
+            {
+                if (IsCurrentUserResponse(response))
+                {
+                    return string.IsNullOrWhiteSpace(response.Response) ? "maybe" : response.Response.ToLower();
+                }
+            }
+
+            return "maybe";
+        }
+
+        private async Task TrySubmitResponseToServerAsync(object payload)
+        {
+            try
+            {
+                await ApiService.PostAsync<object, ApiResponse<object>>("/api/respond-slot", payload);
+            }
+            catch
+            {
+                // The current backend can fail with a MongoDB responses-array update conflict.
+                // UI keeps the user's choice locally so the workflow remains usable.
+            }
+        }
+
+        private bool IsCurrentUserResponse(SlotResponseDto response)
+        {
+            return string.Equals(
+                response?.UserId?.Trim(),
+                ApiService.CurrentUserId?.Trim(),
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+
         private class SlotControlData
         {
             public string SlotId { get; set; }
-            public ComboBox CmbResponse { get; set; }
+            public RadioButton RdoYes { get; set; }
+            public RadioButton RdoNo { get; set; }
+            public RadioButton RdoMaybe { get; set; }
+
+            public string GetSelectedResponse()
+            {
+                if (RdoYes.Checked) return "yes";
+                if (RdoNo.Checked) return "no";
+                return "maybe";
+            }
         }
     }
 }

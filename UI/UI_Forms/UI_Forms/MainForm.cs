@@ -61,12 +61,65 @@ namespace UI_Forms
         // 🌟 향후 미팅 데이터 렌더링 시 사용할 접두사 포맷터
         private string FormatMeetingTitle(string title, string responseStatus)
         {
-            string prefix = "!"; // 기본 미응답
+            string prefix = "!"; // 기본 미정
             if (responseStatus?.ToLower() == "yes") prefix = "✓";
             else if (responseStatus?.ToLower() == "no") prefix = "X";
 
             string formattedTitle = FormatTitle(title);
             return $"[{prefix}] {formattedTitle}";
+        }
+
+        private string GetCurrentUserSlotResponse(MeetingSlotDto slot)
+        {
+            string cachedResponse = SlotResponseCache.GetResponse(ApiService.CurrentUserId, slot?.Id);
+            if (!string.IsNullOrWhiteSpace(cachedResponse)) return cachedResponse.ToLower();
+
+            if (slot?.Responses == null) return "maybe";
+
+            foreach (var response in slot.Responses)
+            {
+                if (IsCurrentUserResponse(response))
+                {
+                    return string.IsNullOrWhiteSpace(response.Response) ? "maybe" : response.Response.ToLower();
+                }
+            }
+
+            return "maybe";
+        }
+
+        private bool IsCurrentUserResponse(SlotResponseDto response)
+        {
+            return string.Equals(
+                response?.UserId?.Trim(),
+                ApiService.CurrentUserId?.Trim(),
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+
+        private string FormatSlotResponseLabel(string responseStatus)
+        {
+            switch (responseStatus)
+            {
+                case "yes":
+                    return "✓ 참석";
+                case "no":
+                    return "X 불참";
+                default:
+                    return "! 미정";
+            }
+        }
+
+        private Color GetSlotResponseColor(string responseStatus)
+        {
+            switch (responseStatus)
+            {
+                case "yes":
+                    return Color.MediumSeaGreen;
+                case "no":
+                    return Color.Crimson;
+                default:
+                    return Color.DimGray;
+            }
         }
 
         private void ApplyResponsiveFormSize()
@@ -484,15 +537,37 @@ namespace UI_Forms
 
                     foreach (var slot in slotsResponse.Data)
                     {
+                        Panel slotRow = new Panel
+                        {
+                            Location = new Point(10, yOffset),
+                            Size = new Size(225, 24),
+                            BackColor = Color.White
+                        };
+
                         Label lblSlot = new Label
                         {
-                            Text = $"- {slot.StartTime:MM/dd HH:mm} ~ {slot.EndTime:HH:mm}",
-                            Location = new Point(15, yOffset),
-                            AutoSize = true,
+                            Text = $"{slot.StartTime:MM/dd HH:mm} ~ {slot.EndTime:HH:mm}",
+                            Location = new Point(4, 3),
+                            Size = new Size(145, 18),
+                            AutoEllipsis = true,
                             Font = new Font("맑은 고딕", 9F)
                         };
-                        pnlCard.Controls.Add(lblSlot);
-                        yOffset += 20;
+
+                        string responseStatus = GetCurrentUserSlotResponse(slot);
+                        Label lblResponse = new Label
+                        {
+                            Text = FormatSlotResponseLabel(responseStatus),
+                            Location = new Point(150, 3),
+                            Size = new Size(70, 18),
+                            TextAlign = ContentAlignment.MiddleRight,
+                            ForeColor = GetSlotResponseColor(responseStatus),
+                            Font = new Font("맑은 고딕", 9F, FontStyle.Bold)
+                        };
+
+                        slotRow.Controls.Add(lblSlot);
+                        slotRow.Controls.Add(lblResponse);
+                        pnlCard.Controls.Add(slotRow);
+                        yOffset += 26;
                     }
                 }
                 else

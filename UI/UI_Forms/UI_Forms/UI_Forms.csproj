@@ -129,6 +129,7 @@
       <DependentUpon>RespondSlotForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Schedule.cs" />
+    <Compile Include="SlotResponseCache.cs" />
     <Compile Include="DayControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
