@@ -16,4 +16,10 @@ namespace UI_Forms.Models
         [JsonPropertyName("member_count")]
         public int MemberCount { get; set; }
     }
+
+    public class TeamCreateResponseData
+    {
+        public string team_id { get; set; }
+        public string join_code { get; set; }
+    }
 }

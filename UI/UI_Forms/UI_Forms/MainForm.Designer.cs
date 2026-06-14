@@ -15,6 +15,10 @@
         private System.Windows.Forms.Panel pnlCalendar;
         private System.Windows.Forms.TableLayoutPanel tlpTeamLegend;
 
+        // 새로 추가되는 팀 기능 버튼들
+        private System.Windows.Forms.Button btnCreateTeam;
+        private System.Windows.Forms.Button btnJoinTeam;
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null)) components.Dispose();
@@ -34,6 +38,8 @@
             this.btnCalendarMode = new System.Windows.Forms.Button();
             this.pnlCalendar = new System.Windows.Forms.Panel();
             this.tlpTeamLegend = new System.Windows.Forms.TableLayoutPanel();
+            this.btnCreateTeam = new System.Windows.Forms.Button();
+            this.btnJoinTeam = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lblTitle
@@ -68,7 +74,7 @@
             this.cmbTeams.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbTeams.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbTeams.Font = new System.Drawing.Font("맑은 고딕", 10F);
-            this.cmbTeams.Location = new System.Drawing.Point(587, 17);
+            this.cmbTeams.Location = new System.Drawing.Point(590, 16);
             this.cmbTeams.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbTeams.Name = "cmbTeams";
             this.cmbTeams.Size = new System.Drawing.Size(140, 25);
@@ -80,7 +86,7 @@
             this.cmbViewType.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbViewType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbViewType.Font = new System.Drawing.Font("맑은 고딕", 10F);
-            this.cmbViewType.Location = new System.Drawing.Point(736, 17);
+            this.cmbViewType.Location = new System.Drawing.Point(736, 16);
             this.cmbViewType.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.cmbViewType.Name = "cmbViewType";
             this.cmbViewType.Size = new System.Drawing.Size(100, 25);
@@ -105,7 +111,7 @@
             this.btnNext.BackColor = System.Drawing.Color.White;
             this.btnNext.FlatAppearance.BorderColor = System.Drawing.Color.LightGray;
             this.btnNext.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnNext.Location = new System.Drawing.Point(400, 60);
+            this.btnNext.Location = new System.Drawing.Point(381, 60);
             this.btnNext.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(35, 24);
@@ -130,7 +136,7 @@
             this.btnToday.FlatAppearance.BorderColor = System.Drawing.Color.CornflowerBlue;
             this.btnToday.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnToday.ForeColor = System.Drawing.Color.CornflowerBlue;
-            this.btnToday.Location = new System.Drawing.Point(445, 60);
+            this.btnToday.Location = new System.Drawing.Point(426, 60);
             this.btnToday.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnToday.Name = "btnToday";
             this.btnToday.Size = new System.Drawing.Size(60, 24);
@@ -145,7 +151,7 @@
             this.btnCalendarMode.FlatAppearance.BorderColor = System.Drawing.Color.MediumSeaGreen;
             this.btnCalendarMode.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCalendarMode.ForeColor = System.Drawing.Color.MediumSeaGreen;
-            this.btnCalendarMode.Location = new System.Drawing.Point(516, 60);
+            this.btnCalendarMode.Location = new System.Drawing.Point(497, 60);
             this.btnCalendarMode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.btnCalendarMode.Name = "btnCalendarMode";
             this.btnCalendarMode.Size = new System.Drawing.Size(86, 24);
@@ -181,12 +187,48 @@
             this.tlpTeamLegend.TabIndex = 10;
             this.tlpTeamLegend.Visible = false;
             // 
+            // btnCreateTeam
+            // 
+            this.btnCreateTeam.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCreateTeam.BackColor = System.Drawing.Color.MediumSeaGreen;
+            this.btnCreateTeam.FlatAppearance.BorderSize = 0;
+            this.btnCreateTeam.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCreateTeam.Font = new System.Drawing.Font("맑은 고딕", 10.2F, System.Drawing.FontStyle.Bold);
+            this.btnCreateTeam.ForeColor = System.Drawing.Color.White;
+            this.btnCreateTeam.Location = new System.Drawing.Point(848, 58);
+            this.btnCreateTeam.Name = "btnCreateTeam";
+            this.btnCreateTeam.Size = new System.Drawing.Size(102, 28);
+            this.btnCreateTeam.TabIndex = 11;
+            this.btnCreateTeam.Text = "팀 생성";
+            this.btnCreateTeam.UseVisualStyleBackColor = false;
+            this.btnCreateTeam.Visible = false;
+            this.btnCreateTeam.Click += new System.EventHandler(this.btnCreateTeam_Click);
+            // 
+            // btnJoinTeam
+            // 
+            this.btnJoinTeam.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnJoinTeam.BackColor = System.Drawing.Color.MediumSeaGreen;
+            this.btnJoinTeam.FlatAppearance.BorderSize = 0;
+            this.btnJoinTeam.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnJoinTeam.Font = new System.Drawing.Font("맑은 고딕", 10.2F, System.Drawing.FontStyle.Bold);
+            this.btnJoinTeam.ForeColor = System.Drawing.Color.White;
+            this.btnJoinTeam.Location = new System.Drawing.Point(734, 58);
+            this.btnJoinTeam.Name = "btnJoinTeam";
+            this.btnJoinTeam.Size = new System.Drawing.Size(102, 28);
+            this.btnJoinTeam.TabIndex = 12;
+            this.btnJoinTeam.Text = "팀 참가";
+            this.btnJoinTeam.UseVisualStyleBackColor = false;
+            this.btnJoinTeam.Visible = false;
+            this.btnJoinTeam.Click += new System.EventHandler(this.btnJoinTeam_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(970, 640);
+            this.Controls.Add(this.btnJoinTeam);
+            this.Controls.Add(this.btnCreateTeam);
             this.Controls.Add(this.tlpTeamLegend);
             this.Controls.Add(this.pnlCalendar);
             this.Controls.Add(this.btnCalendarMode);

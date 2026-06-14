@@ -61,7 +61,6 @@ namespace UI_Forms
             int targetWidth = Math.Min(1109, workArea.Width - 40);
             int targetHeight = Math.Min(800, workArea.Height - 60);
 
-            // 작은 화면에서도 캘린더 하단이 잘리지 않도록 폼 크기를 현재 작업 영역 안으로 제한합니다.
             this.ClientSize = new Size(Math.Max(960, targetWidth), Math.Max(640, targetHeight));
             this.CenterToScreen();
         }
@@ -140,40 +139,7 @@ namespace UI_Forms
 
             await FetchAndRenderSchedulesAsync(startDate, totalDaysToRender, renderVersion);
         }
-        //기존코드
-        //private async Task FetchAndRenderSchedulesAsync(DateTime startDate, int totalDays, int renderVersion)
-        //{
-        //    try
-        //    {
-        //        string userId = ApiService.CurrentUserId;
-        //        if (_isTeamCalendar) _teamUserNames.Clear();
 
-        //        var fetchTasks = new List<Task>();
-        //        for (int i = 0; i < totalDays; i++)
-        //        {
-        //            int index = i;
-        //            DateTime targetDate = startDate.AddDays(index);
-        //            string dateStr = targetDate.ToString("yyyy-MM-dd");
-
-        //            fetchTasks.Add(RenderDaySchedulesAsync(index, userId, dateStr, renderVersion));
-        //        }
-        //        await Task.WhenAll(fetchTasks);
-
-        //        if (renderVersion == _renderVersion)
-        //        {
-        //            UpdateTeamLegend();
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        if (renderVersion == _renderVersion)
-        //        {
-        //            MessageBox.Show($"캘린더 조회 중 오류가 발생했습니다.\n{ex.Message}", "조회 오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //        }
-        //    }
-        //}
-
-        // ✅ 위에 있는 새로 바꾼 코드
         private async Task FetchAndRenderSchedulesAsync(DateTime startDate, int totalDays, int renderVersion)
         {
             try
@@ -181,7 +147,6 @@ namespace UI_Forms
                 string userId = ApiService.CurrentUserId;
                 if (_isTeamCalendar) _teamUserNames.Clear();
 
-                // 📌 한 번에 모든 데이터 조회
                 if (_isTeamCalendar)
                 {
                     await FetchAndRenderTeamSchedulesRangeAsync(startDate, totalDays, renderVersion);
@@ -205,13 +170,8 @@ namespace UI_Forms
             }
         }
 
-        // 📌 새 메서드: 개인 캘린더 범위 조회
         private async Task FetchAndRenderPersonalSchedulesRangeAsync(DateTime startDate, int totalDays, int renderVersion)
         {
-            System.Diagnostics.Debug.WriteLine($"=============================");
-            System.Diagnostics.Debug.WriteLine($"🚀 캘린더 렌더링 파이프라인 진입 성공!");
-            System.Diagnostics.Debug.WriteLine($"현재 모드 -> 팀 캘린더: {_isTeamCalendar}, 버전: {renderVersion}");
-            System.Diagnostics.Debug.WriteLine($"=============================");
             try
             {
                 string userId = ApiService.CurrentUserId;
@@ -220,10 +180,9 @@ namespace UI_Forms
                 var response = await ApiService.GetAsync<ApiResponse<RangeScheduleData>>(
                     $"/api/availability/{userId}/range?startDate={startDateStr}&days={totalDays}"
                 );
-                
+
                 if (renderVersion != _renderVersion) return;
                 if (response?.Success != true || response.Data?.Schedules == null) return;
-
 
                 foreach (var schedule in response.Data.Schedules)
                 {
@@ -234,22 +193,17 @@ namespace UI_Forms
 
                     if (schedule.Slots != null)
                     {
-                        // MainForm.cs -> FetchAndRenderPersonalSchedulesRangeAsync 내부
-
                         foreach (var slot in schedule.Slots)
                         {
                             string displayTitle = $"{slot.Start} {FormatTitle(slot.Title)}";
                             bool isFullBox = slot.Start == "00:00" && slot.End == "23:59";
 
-                            // 🌟 클릭 시 모달 폼을 띄우는 Action 콜백 추가
                             _dayControls[dayIndex].AddScheduleSlot(displayTitle, Color.CornflowerBlue, isFullBox, () =>
                             {
-                                // 1. 개인 일정이므로 teamId는 null로 넘김
                                 using (var detailForm = new ScheduleDetailForm(scheduleDate, slot, null))
                                 {
                                     if (detailForm.ShowDialog() == DialogResult.OK)
                                     {
-                                        // 2. 삭제 성공 시 달력 다시 그리기
                                         _ = RenderCalendarAsync();
                                     }
                                 }
@@ -263,7 +217,7 @@ namespace UI_Forms
                 Console.WriteLine($"❌ FetchAndRenderPersonalSchedulesRangeAsync 오류: {ex.Message}");
             }
         }
-        // 새 메서드 팀의 스케쥴 범위 지정 조회
+
         private async Task FetchAndRenderTeamSchedulesRangeAsync(DateTime startDate, int totalDays, int renderVersion)
         {
             try
@@ -273,7 +227,6 @@ namespace UI_Forms
 
                 string startDateStr = startDate.ToString("yyyy-MM-dd");
 
-                // 백엔드에 새로 만든 /range API 호출
                 var response = await ApiService.GetAsync<ApiResponse<TeamRangeScheduleData>>(
                     $"/api/availability/team/{selectedTeamId}/range?startDate={startDateStr}&days={totalDays}"
                 );
@@ -281,9 +234,7 @@ namespace UI_Forms
                 if (renderVersion != _renderVersion) return;
                 if (response?.Success != true || response.Data?.Schedules == null) return;
 
-                // 윈폼 캘린더 특성상 같은 날짜의 일정을 한곳에 모아서 시간순 정렬 후 그려야 이쁘게 쌓입니다.
-                var groupedByDate = response.Data.Schedules
-                    .GroupBy(s => s.Date);
+                var groupedByDate = response.Data.Schedules.GroupBy(s => s.Date);
 
                 foreach (var group in groupedByDate)
                 {
@@ -292,7 +243,6 @@ namespace UI_Forms
                     int dayIndex = (int)(scheduleDate - startDate).TotalDays;
                     if (dayIndex < 0 || dayIndex >= totalDays) continue;
 
-                    // 기존 하루치 렌더링에 있던 정렬 로직 그대로 활용 (시작 빠른 순, 종료 늦은 순)
                     var teamSlots = group
                         .Where(user => user.Slots != null)
                         .SelectMany(user => user.Slots.Select(slot => new
@@ -305,23 +255,18 @@ namespace UI_Forms
                         .ThenByDescending(item => ToMinutes(item.Slot.End))
                         .ToList();
 
-                    // MainForm.cs -> FetchAndRenderTeamSchedulesRangeAsync 내부
-
                     foreach (var item in teamSlots)
                     {
                         Color userColor = GetTeamUserColor(item.UserId);
                         RememberTeamLegendUser(item.UserId, item.UserName);
 
-                        string displayTitle = $"[{item.UserName}] {item.Slot.Start} {FormatTitle(item.Slot.Title)}";
+                        // 🌟 수정된 부분: 이름은 빼고 시작시간 - 종료시간만 깔끔하게 표시
+                        string displayTitle = $"{item.Slot.Start} - {item.Slot.End}";
 
-                        // 🌟 클릭 시 모달 폼을 띄우는 Action 콜백 추가
                         _dayControls[dayIndex].AddScheduleSlot(displayTitle, userColor, false, () =>
                         {
-                            // 팀 일정이므로 현재 선택된 teamId를 넘김
                             using (var detailForm = new ScheduleDetailForm(scheduleDate, item.Slot, selectedTeamId))
                             {
-                                // 💡 주의: 현재 ScheduleDetailForm 로직은 로그인한 유저(CurrentUserId)의 일정만 지울 수 있게 되어 있습니다.
-                                // 타인의 일정을 삭제하려고 하면 서버 구조상 본인 일정에서 찾지 못해 무시되므로 안전합니다.
                                 if (detailForm.ShowDialog() == DialogResult.OK)
                                 {
                                     _ = RenderCalendarAsync();
@@ -334,53 +279,6 @@ namespace UI_Forms
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ FetchAndRenderTeamSchedulesRangeAsync 오류: {ex.Message}");
-            }
-        }
-
-        private async Task RenderDaySchedulesAsync(int index, string userId, string dateStr, int renderVersion)
-        {
-            if (_isTeamCalendar)
-            {
-                string selectedTeamId = cmbTeams.SelectedValue?.ToString();
-                if (string.IsNullOrEmpty(selectedTeamId)) return;
-
-                var response = await ApiService.GetAsync<ApiResponse<List<TeamAvailabilityData>>>($"/api/availability/team/{selectedTeamId}/{dateStr}");
-                if (!IsActiveRenderCell(renderVersion, index, dateStr)) return;
-                if (response?.Success != true || response.Data == null) return;
-
-                // 팀 캘린더는 같은 날짜 안에서 시작이 빠른 순, 종료가 늦은 순으로 쌓아 겹친 시간의 길이 차이를 눈에 보이게 합니다.
-                var teamSlots = response.Data
-                    .Where(user => user.Slots != null)
-                    .SelectMany(user => user.Slots.Select(slot => new
-                    {
-                        UserId = user.UserId,
-                        UserName = user.UserName,
-                        Slot = slot
-                    }))
-                    .OrderBy(item => ToMinutes(item.Slot.Start))
-                    .ThenByDescending(item => ToMinutes(item.Slot.End))
-                    .ToList();
-
-                foreach (var item in teamSlots)
-                {
-                    Color userColor = GetTeamUserColor(item.UserId);
-                    RememberTeamLegendUser(item.UserId, item.UserName);
-                    string displayTitle = $"{item.Slot.Start} - {item.Slot.End}";
-                    _dayControls[index].AddScheduleSlot(displayTitle, userColor, false);
-                }
-
-                return;
-            }
-
-            var personalResponse = await ApiService.GetAsync<ApiResponse<AvailabilityData>>($"/api/availability/{userId}/{dateStr}");
-            if (!IsActiveRenderCell(renderVersion, index, dateStr)) return;
-            if (personalResponse?.Success != true || personalResponse.Data?.Slots == null) return;
-
-            foreach (var slot in personalResponse.Data.Slots)
-            {
-                string displayTitle = $"{slot.Start} - {slot.End}";
-                bool isFullBox = slot.Start == "00:00" && slot.End == "23:59";
-                _dayControls[index].AddScheduleSlot(displayTitle, Color.CornflowerBlue, isFullBox);
             }
         }
 
@@ -421,27 +319,48 @@ namespace UI_Forms
             await RenderCalendarAsync();
         }
 
-        // ---------------------------------------------------------
-        // 1. 일정 추가 버튼 클릭 이벤트 수정
-        // ---------------------------------------------------------
         private async void btnAddAvailability_Click(object sender, EventArgs e)
         {
             using (AddScheduleForm addForm = new AddScheduleForm())
             {
                 if (addForm.ShowDialog() == DialogResult.OK)
                 {
-                    await RenderCalendarAsync(); // 등록 성공 후 자동 새로고침
+                    await RenderCalendarAsync();
                 }
             }
+        }
+
+        // 🌟 팀 생성 폼 호출 (모달)
+        private async void btnCreateTeam_Click(object sender, EventArgs e)
+        {
+            using (var createTeamForm = new CreateTeamForm())
+            {
+                if (createTeamForm.ShowDialog() == DialogResult.OK)
+                {
+                    // 팀 생성 후 내 팀 목록 새로고침
+                    await LoadUserTeamsAsync();
+                    UpdateCalendarModeUi();
+                    await RenderCalendarAsync();
+                }
+            }
+        }
+
+        // 🌟 팀 참가 버튼 클릭 (다음 단계 준비용)
+        private void btnJoinTeam_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("팀 참가 기능 폼을 곧 이어서 만들 예정입니다!", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void UpdateCalendarModeUi()
         {
             string userName = ApiService.CurrentUserName ?? "사용자";
 
-            // 팀 선택 콤보박스는 팀 캘린더 모드에서만 보여 사용자가 현재 모드를 헷갈리지 않게 합니다.
+            // 팀 선택 콤보박스와 팀 생성/참가 버튼을 팀 캘린더 모드에서만 보이게 처리
             cmbTeams.Visible = _isTeamCalendar;
             tlpTeamLegend.Visible = _isTeamCalendar;
+            btnCreateTeam.Visible = _isTeamCalendar; // 팀 생성 버튼 가시성 제어
+            btnJoinTeam.Visible = _isTeamCalendar;   // 팀 참가 버튼 가시성 제어
+
             UpdateCalendarAreaSize();
             btnCalendarMode.Text = _isTeamCalendar ? "개인 캘린더" : "팀 캘린더";
             btnCalendarMode.ForeColor = _isTeamCalendar ? Color.CornflowerBlue : Color.MediumSeaGreen;
@@ -468,7 +387,6 @@ namespace UI_Forms
             pnlCalendar.Width = this.ClientSize.Width - (pnlCalendar.Left * 2);
             tlpTeamLegend.Width = pnlCalendar.Width;
 
-            // 개인 캘린더는 범례가 없으므로 하단 여백까지 캘린더가 채우고, 팀 캘린더는 범례 영역을 남겨둡니다.
             if (_isTeamCalendar)
             {
                 int calendarHeight = this.ClientSize.Height - pnlCalendar.Top - legendGap - legendHeight - bottomPadding;
@@ -483,15 +401,6 @@ namespace UI_Forms
                 tlpTeamLegend.Location = new Point(pnlCalendar.Left, pnlCalendar.Bottom + legendGap);
                 tlpTeamLegend.Size = new Size(pnlCalendar.Width, legendHeight);
             }
-        }
-
-        private bool IsActiveRenderCell(int renderVersion, int index, string dateStr)
-        {
-            // 달/모드 전환 전에 시작된 늦은 API 응답이 현재 달의 같은 인덱스 칸에 섞이는 것을 막습니다.
-            return renderVersion == _renderVersion
-                && index >= 0
-                && index < _dayControls.Count
-                && _dayControls[index].Date.ToString("yyyy-MM-dd") == dateStr;
         }
 
         private Color GetTeamUserColor(string userId)
@@ -522,10 +431,7 @@ namespace UI_Forms
             tlpTeamLegend.RowStyles.Clear();
             tlpTeamLegend.RowCount = 0;
 
-            if (!_isTeamCalendar || _teamUserNames.Count == 0)
-            {
-                return;
-            }
+            if (!_isTeamCalendar || _teamUserNames.Count == 0) return;
 
             int rowCount = (int)Math.Ceiling(_teamUserNames.Count / 3.0);
             tlpTeamLegend.RowCount = rowCount;
