@@ -99,6 +99,12 @@
     <Compile Include="CreateTeamForm.Designer.cs">
       <DependentUpon>CreateTeamForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="JoinTeamForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="JoinTeamForm.Designer.cs">
+      <DependentUpon>JoinTeamForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\AuthModels.cs" />
     <Compile Include="Models\ScheduleModels.cs" />

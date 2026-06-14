@@ -345,10 +345,19 @@ namespace UI_Forms
             }
         }
 
-        // 🌟 팀 참가 버튼 클릭 (다음 단계 준비용)
-        private void btnJoinTeam_Click(object sender, EventArgs e)
+        // 🌟 팀 참가 버튼 클릭 (모달 연동 및 새로고침 적용)
+        private async void btnJoinTeam_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("팀 참가 기능 폼을 곧 이어서 만들 예정입니다!", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            using (var form = new JoinTeamForm())
+            {
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    // 참가 성공 시 기존 임시 메서드 대신 실제 구현된 새로고침 로직 호출
+                    await LoadUserTeamsAsync();
+                    UpdateCalendarModeUi();
+                    await RenderCalendarAsync();
+                }
+            }
         }
 
         private void UpdateCalendarModeUi()
