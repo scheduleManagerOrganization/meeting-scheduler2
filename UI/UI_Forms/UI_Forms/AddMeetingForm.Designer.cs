@@ -100,11 +100,11 @@
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSave.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold);
             this.btnSave.ForeColor = System.Drawing.Color.White;
-            this.btnSave.Location = new System.Drawing.Point(145, 260);
+            this.btnSave.Location = new System.Drawing.Point(115, 260); // 가운데 정렬을 위해 살짝 이동
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(75, 35);
+            this.btnSave.Size = new System.Drawing.Size(105, 35); // 글자가 길어지므로 너비 확장
             this.btnSave.TabIndex = 7;
-            this.btnSave.Text = "저장";
+            this.btnSave.Text = "AI 추천받기";
             this.btnSave.UseVisualStyleBackColor = false;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 

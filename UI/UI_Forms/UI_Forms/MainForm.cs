@@ -420,6 +420,109 @@ namespace UI_Forms
                 lblTitle.Text = $"{userName}님의 개인 캘린더";
                 tlpTeamLegend.Controls.Clear();
             }
+            // 🌟 [추가된 부분] 팀 캘린더일 때 우측으로 폼 확장
+            if (_isTeamCalendar)
+            {
+                this.Width = 1290; // 원래 Width(약 986)에서 우측 사이드바(280)만큼 확장
+                flpMeetingSidebar.Visible = true;
+                _ = LoadAndRenderTeamMeetingsAsync(); // 미팅 목록 불러오기
+            }
+            else
+            {
+                this.Width = 986; // 개인 캘린더일 때 축소
+                flpMeetingSidebar.Visible = false;
+            }
+        }
+
+        private async Task LoadAndRenderTeamMeetingsAsync()
+        {
+            flpMeetingSidebar.Controls.Clear();
+            string currentTeamId = cmbTeams.SelectedValue?.ToString();
+            if (string.IsNullOrEmpty(currentTeamId)) return;
+
+            // 미팅 목록 가져오기
+            var meetingsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingDto>>>($"/api/meetings/team/{currentTeamId}");
+            if (meetingsResponse?.Success != true || meetingsResponse.Data == null) return;
+
+            foreach (var meeting in meetingsResponse.Data)
+            {
+                // 미팅별 카드(패널) 생성
+                Panel pnlCard = new Panel
+                {
+                    Width = 250,
+                    AutoSize = true,
+                    BackColor = Color.White,
+                    Margin = new Padding(10),
+                    Padding = new Padding(10),
+                    BorderStyle = BorderStyle.FixedSingle
+                };
+
+                // 제목 및 소요 시간
+                Label lblTitle = new Label
+                {
+                    Text = $"{meeting.Title} ({meeting.DurationMinutes}분)",
+                    Font = new Font("맑은 고딕", 11F, FontStyle.Bold),
+                    ForeColor = Color.Crimson,
+                    AutoSize = true,
+                    Location = new Point(10, 10)
+                };
+                pnlCard.Controls.Add(lblTitle);
+
+                // 추천 슬롯 데이터 가져오기
+                var slotsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingSlotDto>>>($"/api/slots/{meeting.Id}");
+                int yOffset = 40;
+
+                if (slotsResponse?.Success == true && slotsResponse.Data != null && slotsResponse.Data.Count > 0)
+                {
+                    Label lblSub = new Label { Text = "추천 시간대:", Font = new Font("맑은 고딕", 9F, FontStyle.Bold), Location = new Point(10, yOffset), AutoSize = true };
+                    pnlCard.Controls.Add(lblSub);
+                    yOffset += 20;
+
+                    foreach (var slot in slotsResponse.Data)
+                    {
+                        Label lblSlot = new Label
+                        {
+                            Text = $"- {slot.StartTime:MM/dd HH:mm} ~ {slot.EndTime:HH:mm}",
+                            Location = new Point(15, yOffset),
+                            AutoSize = true,
+                            Font = new Font("맑은 고딕", 9F)
+                        };
+                        pnlCard.Controls.Add(lblSlot);
+                        yOffset += 20;
+                    }
+                }
+                else
+                {
+                    Label lblNoSlot = new Label { Text = "조율 중이거나 슬롯이 없습니다.", Location = new Point(10, yOffset), AutoSize = true };
+                    pnlCard.Controls.Add(lblNoSlot);
+                    yOffset += 25;
+                }
+
+                // 응답하기 버튼 생성
+                Button btnRespond = new Button
+                {
+                    Text = "시간대 응답하기",
+                    BackColor = Color.CornflowerBlue,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Location = new Point(10, yOffset + 10),
+                    Size = new Size(225, 30)
+                };
+                btnRespond.Click += (s, e) =>
+                {
+                    using (var respondForm = new RespondSlotForm(meeting.Id, meeting.Title))
+                    {
+                        if (respondForm.ShowDialog() == DialogResult.OK)
+                        {
+                            _ = LoadAndRenderTeamMeetingsAsync(); // 응답 후 패널 새로고침
+                        }
+                    }
+                };
+                pnlCard.Controls.Add(btnRespond);
+                pnlCard.Height = btnRespond.Bottom + 15;
+
+                flpMeetingSidebar.Controls.Add(pnlCard);
+            }
         }
 
         private void UpdateCalendarAreaSize()

@@ -113,6 +113,7 @@
     </Compile>
     <Compile Include="Models\ApiResponse.cs" />
     <Compile Include="Models\AuthModels.cs" />
+    <Compile Include="Models\MeetingModels.cs" />
     <Compile Include="Models\ScheduleModels.cs" />
     <Compile Include="Models\TeamModels.cs" />
     <Compile Include="RegisterForm.cs">
@@ -120,6 +121,12 @@
     </Compile>
     <Compile Include="RegisterForm.Designer.cs">
       <DependentUpon>RegisterForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RespondSlotForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RespondSlotForm.Designer.cs">
+      <DependentUpon>RespondSlotForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Schedule.cs" />
     <Compile Include="DayControl.cs">

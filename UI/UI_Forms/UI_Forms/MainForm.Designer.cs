@@ -14,6 +14,7 @@
         private System.Windows.Forms.Button btnCalendarMode;
         private System.Windows.Forms.Panel pnlCalendar;
         private System.Windows.Forms.TableLayoutPanel tlpTeamLegend;
+        private System.Windows.Forms.FlowLayoutPanel flpMeetingSidebar;
 
         private System.Windows.Forms.Button btnCreateTeam;
         private System.Windows.Forms.Button btnJoinTeam;
@@ -48,6 +49,16 @@
             this.btnCreateTeam = new System.Windows.Forms.Button();
             this.btnJoinTeam = new System.Windows.Forms.Button();
             this.btnAddMeeting = new System.Windows.Forms.Button();
+            this.flpMeetingSidebar = new System.Windows.Forms.FlowLayoutPanel();
+            this.flpMeetingSidebar.AutoScroll = true;
+            this.flpMeetingSidebar.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.flpMeetingSidebar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.flpMeetingSidebar.Location = new System.Drawing.Point(970, 96);
+            this.flpMeetingSidebar.Name = "flpMeetingSidebar";
+            this.flpMeetingSidebar.Size = new System.Drawing.Size(280, 528);
+            this.flpMeetingSidebar.TabIndex = 20;
+            this.flpMeetingSidebar.Visible = false;
+            this.Controls.Add(this.flpMeetingSidebar);
 
             // 미팅 범례 초기화
             this.pnlMeetingLegend = new System.Windows.Forms.Panel();

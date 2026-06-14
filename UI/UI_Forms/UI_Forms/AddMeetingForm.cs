@@ -80,14 +80,14 @@ namespace UI_Forms
             }
 
             int durationMinutes = int.Parse(cmbDuration.SelectedItem.ToString().Replace("분", ""));
-
-            // 설명칸이 플레이스홀더 상태면 빈 문자열로 서버에 보냄
             string description = (txtDescription.Text == PlaceholderDesc) ? "" : txtDescription.Text;
 
             btnSave.Enabled = false;
+            btnSave.Text = "추천 진행 중...";
 
             try
             {
+                // 1. 미팅 생성 페이로드
                 var payload = new
                 {
                     team_id = _teamId,
@@ -98,13 +98,29 @@ namespace UI_Forms
                     deadline_date = dtpDeadline.Value.ToString("yyyy-MM-dd")
                 };
 
-                var postResponse = await ApiService.PostAsync<object, ApiResponse<object>>("/api/meetings", payload);
+                // 미팅 생성 API 호출
+                var createResponse = await ApiService.PostAsync<object, ApiResponse<MeetingCreateData>>("/api/meetings", payload);
 
-                if (postResponse != null && postResponse.Success)
+                if (createResponse != null && createResponse.Success && createResponse.Data != null)
                 {
-                    MessageBox.Show("팀 미팅이 성공적으로 생성되었습니다.", "성공", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    string newMeetingId = createResponse.Data.MeetingId;
+
+                    // 2. 미팅 생성 성공 시, 즉시 AI 추천 API 호출
+                    var aiPayload = new { meeting_id = newMeetingId };
+                    var aiResponse = await ApiService.PostAsync<object, ApiResponse<object>>("/api/ai-recommend-slots", aiPayload);
+
+                    if (aiResponse != null && aiResponse.Success)
+                    {
+                        MessageBox.Show("미팅 생성 및 AI 추천이 성공적으로 완료되었습니다!", "성공", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show("미팅은 생성되었으나 AI 추천에 실패했습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        this.DialogResult = DialogResult.OK; // 미팅 자체는 생성되었으므로 달력 갱신을 위해 OK 반환
+                        this.Close();
+                    }
                 }
                 else
                 {
@@ -118,8 +134,10 @@ namespace UI_Forms
             finally
             {
                 btnSave.Enabled = true;
+                btnSave.Text = "AI 추천받기";
             }
         }
+
 
         private void btnCancel_Click(object sender, EventArgs e) => this.Close();
     }
