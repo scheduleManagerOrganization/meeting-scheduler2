@@ -163,16 +163,32 @@ public class SlotsController : ControllerBase
                 return NotFound(new { success = false, error = "SLOT_NOT_FOUND" });
             
             var filter = Builders<ProposedSlot>.Filter.Eq(x => x.Id, request.SlotId);
-            var update = Builders<ProposedSlot>.Update
-                .PullFilter(x => x.Responses, r => r.UserId == request.UserId)
+            //-------기존 코드 에러발생으로 아래 코드로 수정 6.15
+            //var update = Builders<ProposedSlot>.Update
+            //    .PullFilter(x => x.Responses, r => r.UserId == request.UserId)
+            //    .Push(x => x.Responses, new SlotResponse
+            //    {
+            //        UserId = request.UserId,
+            //        Response = request.Response,
+            //        RespondedAt = DateTime.UtcNow
+            //    });
+
+            //await _mongoDB.ProposedSlots.UpdateOneAsync(filter, update);
+            //---수정한 코드
+            var pullUpdate = Builders<ProposedSlot>.Update
+            .PullFilter(x => x.Responses, r => r.UserId == request.UserId);
+            await _mongoDB.ProposedSlots.UpdateOneAsync(filter, pullUpdate);
+            // 새로운 응답 객체를 배열에 추가 (Push)
+            var pushUpdate = Builders<ProposedSlot>.Update
                 .Push(x => x.Responses, new SlotResponse
                 {
                     UserId = request.UserId,
                     Response = request.Response,
                     RespondedAt = DateTime.UtcNow
                 });
-            
-            await _mongoDB.ProposedSlots.UpdateOneAsync(filter, update);
+            await _mongoDB.ProposedSlots.UpdateOneAsync(filter, pushUpdate);
+
+
             return Ok(new { success = true, message = "응답이 저장되었습니다" });
         }
         catch (Exception e)
