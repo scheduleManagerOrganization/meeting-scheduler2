@@ -18,7 +18,7 @@ namespace UI_Forms
         private readonly Dictionary<string, Color> _teamUserColors = new Dictionary<string, Color>();
         private readonly Dictionary<string, string> _teamUserNames = new Dictionary<string, string>();
         private const int PersonalClientWidth = 970;
-        private const int TeamClientWidth = 1270;
+        private const int TeamClientWidth = 1305;//팀캘린더 가로폭 증가
         private const int FormPadding = 20;
         private const int SidebarGap = 20;
         private readonly Color[] _teamColorPalette = new[]

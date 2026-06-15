@@ -50,26 +50,13 @@
             this.btnJoinTeam = new System.Windows.Forms.Button();
             this.btnAddMeeting = new System.Windows.Forms.Button();
             this.flpMeetingSidebar = new System.Windows.Forms.FlowLayoutPanel();
-            this.flpMeetingSidebar.AutoScroll = true;
-            this.flpMeetingSidebar.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.flpMeetingSidebar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.flpMeetingSidebar.Location = new System.Drawing.Point(970, 96);
-            this.flpMeetingSidebar.Name = "flpMeetingSidebar";
-            this.flpMeetingSidebar.Size = new System.Drawing.Size(280, 528);
-            this.flpMeetingSidebar.TabIndex = 20;
-            this.flpMeetingSidebar.Visible = false;
-            this.Controls.Add(this.flpMeetingSidebar);
-
-            // 미팅 범례 초기화
             this.pnlMeetingLegend = new System.Windows.Forms.Panel();
             this.lblLegendMeetingTitle = new System.Windows.Forms.Label();
             this.lblLegendAttending = new System.Windows.Forms.Label();
             this.lblLegendNotAttending = new System.Windows.Forms.Label();
             this.lblLegendNotResponded = new System.Windows.Forms.Label();
-
             this.pnlMeetingLegend.SuspendLayout();
             this.SuspendLayout();
-
             // 
             // lblTitle
             // 
@@ -80,7 +67,6 @@
             this.lblTitle.Size = new System.Drawing.Size(197, 30);
             this.lblTitle.TabIndex = 8;
             this.lblTitle.Text = "사용자님의 캘린더";
-
             // 
             // btnAddAvailability
             // 
@@ -97,7 +83,6 @@
             this.btnAddAvailability.Text = "+ 일정 추가";
             this.btnAddAvailability.UseVisualStyleBackColor = false;
             this.btnAddAvailability.Click += new System.EventHandler(this.btnAddAvailability_Click);
-
             // 
             // cmbTeams
             // 
@@ -109,7 +94,6 @@
             this.cmbTeams.Size = new System.Drawing.Size(140, 25);
             this.cmbTeams.TabIndex = 6;
             this.cmbTeams.Visible = false;
-
             // 
             // cmbViewType
             // 
@@ -120,7 +104,6 @@
             this.cmbViewType.Name = "cmbViewType";
             this.cmbViewType.Size = new System.Drawing.Size(100, 25);
             this.cmbViewType.TabIndex = 5;
-
             // 
             // btnPrev
             // 
@@ -134,7 +117,6 @@
             this.btnPrev.Text = "<";
             this.btnPrev.UseVisualStyleBackColor = false;
             this.btnPrev.Click += new System.EventHandler(this.btnPrev_Click);
-
             // 
             // btnNext
             // 
@@ -148,7 +130,6 @@
             this.btnNext.Text = ">";
             this.btnNext.UseVisualStyleBackColor = false;
             this.btnNext.Click += new System.EventHandler(this.btnNext_Click);
-
             // 
             // lblCurrentMonth
             // 
@@ -159,7 +140,6 @@
             this.lblCurrentMonth.TabIndex = 3;
             this.lblCurrentMonth.Text = "2026년 05월";
             this.lblCurrentMonth.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-
             // 
             // btnToday
             // 
@@ -174,7 +154,6 @@
             this.btnToday.Text = "오늘";
             this.btnToday.UseVisualStyleBackColor = false;
             this.btnToday.Click += new System.EventHandler(this.btnToday_Click);
-
             // 
             // btnCalendarMode
             // 
@@ -189,7 +168,6 @@
             this.btnCalendarMode.Text = "팀 캘린더";
             this.btnCalendarMode.UseVisualStyleBackColor = false;
             this.btnCalendarMode.Click += new System.EventHandler(this.btnCalendarMode_Click);
-
             // 
             // pnlCalendar
             // 
@@ -199,7 +177,6 @@
             this.pnlCalendar.Name = "pnlCalendar";
             this.pnlCalendar.Size = new System.Drawing.Size(930, 528);
             this.pnlCalendar.TabIndex = 0;
-
             // 
             // tlpTeamLegend
             // 
@@ -216,67 +193,42 @@
             this.tlpTeamLegend.Size = new System.Drawing.Size(730, 62);
             this.tlpTeamLegend.TabIndex = 10;
             this.tlpTeamLegend.Visible = false;
-
             // 
-            // pnlMeetingLegend (미팅 범례)
+            // btnCreateTeam
             // 
-            this.pnlMeetingLegend.BackColor = System.Drawing.Color.White;
-            this.pnlMeetingLegend.Controls.Add(this.lblLegendMeetingTitle);
-            this.pnlMeetingLegend.Controls.Add(this.lblLegendAttending);
-            this.pnlMeetingLegend.Controls.Add(this.lblLegendNotAttending);
-            this.pnlMeetingLegend.Controls.Add(this.lblLegendNotResponded);
-            this.pnlMeetingLegend.Location = new System.Drawing.Point(760, 558);
-            this.pnlMeetingLegend.Name = "pnlMeetingLegend";
-            this.pnlMeetingLegend.Size = new System.Drawing.Size(190, 62);
-            this.pnlMeetingLegend.TabIndex = 14;
-            this.pnlMeetingLegend.Visible = false;
-
+            this.btnCreateTeam.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCreateTeam.BackColor = System.Drawing.Color.MediumSeaGreen;
+            this.btnCreateTeam.FlatAppearance.BorderSize = 0;
+            this.btnCreateTeam.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCreateTeam.Font = new System.Drawing.Font("맑은 고딕", 10.2F, System.Drawing.FontStyle.Bold);
+            this.btnCreateTeam.ForeColor = System.Drawing.Color.White;
+            this.btnCreateTeam.Location = new System.Drawing.Point(734, 58);
+            this.btnCreateTeam.Name = "btnCreateTeam";
+            this.btnCreateTeam.Size = new System.Drawing.Size(102, 28);
+            this.btnCreateTeam.TabIndex = 11;
+            this.btnCreateTeam.Text = "팀 생성";
+            this.btnCreateTeam.UseVisualStyleBackColor = false;
+            this.btnCreateTeam.Visible = false;
+            this.btnCreateTeam.Click += new System.EventHandler(this.btnCreateTeam_Click);
             // 
-            // lblLegendMeetingTitle
+            // btnJoinTeam
             // 
-            this.lblLegendMeetingTitle.AutoSize = true;
-            this.lblLegendMeetingTitle.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold);
-            this.lblLegendMeetingTitle.ForeColor = System.Drawing.Color.Crimson;
-            this.lblLegendMeetingTitle.Location = new System.Drawing.Point(6, 6);
-            this.lblLegendMeetingTitle.Name = "lblLegendMeetingTitle";
-            this.lblLegendMeetingTitle.Size = new System.Drawing.Size(95, 15);
-            this.lblLegendMeetingTitle.Text = "■ 팀 미팅 일정";
-
+            this.btnJoinTeam.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnJoinTeam.BackColor = System.Drawing.Color.MediumSeaGreen;
+            this.btnJoinTeam.FlatAppearance.BorderSize = 0;
+            this.btnJoinTeam.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnJoinTeam.Font = new System.Drawing.Font("맑은 고딕", 10.2F, System.Drawing.FontStyle.Bold);
+            this.btnJoinTeam.ForeColor = System.Drawing.Color.White;
+            this.btnJoinTeam.Location = new System.Drawing.Point(620, 58);
+            this.btnJoinTeam.Name = "btnJoinTeam";
+            this.btnJoinTeam.Size = new System.Drawing.Size(102, 28);
+            this.btnJoinTeam.TabIndex = 12;
+            this.btnJoinTeam.Text = "팀 참가";
+            this.btnJoinTeam.UseVisualStyleBackColor = false;
+            this.btnJoinTeam.Visible = false;
+            this.btnJoinTeam.Click += new System.EventHandler(this.btnJoinTeam_Click);
             // 
-            // lblLegendAttending
-            // 
-            this.lblLegendAttending.AutoSize = true;
-            this.lblLegendAttending.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            this.lblLegendAttending.ForeColor = System.Drawing.Color.DimGray;
-            this.lblLegendAttending.Location = new System.Drawing.Point(6, 26);
-            this.lblLegendAttending.Name = "lblLegendAttending";
-            this.lblLegendAttending.Size = new System.Drawing.Size(56, 15);
-            this.lblLegendAttending.Text = "✓ : 참석";
-
-            // 
-            // lblLegendNotAttending
-            // 
-            this.lblLegendNotAttending.AutoSize = true;
-            this.lblLegendNotAttending.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            this.lblLegendNotAttending.ForeColor = System.Drawing.Color.DimGray;
-            this.lblLegendNotAttending.Location = new System.Drawing.Point(66, 26);
-            this.lblLegendNotAttending.Name = "lblLegendNotAttending";
-            this.lblLegendNotAttending.Size = new System.Drawing.Size(51, 15);
-            this.lblLegendNotAttending.Text = "X : 불참";
-
-            // 
-            // lblLegendNotResponded
-            // 
-            this.lblLegendNotResponded.AutoSize = true;
-            this.lblLegendNotResponded.Font = new System.Drawing.Font("맑은 고딕", 9F);
-            this.lblLegendNotResponded.ForeColor = System.Drawing.Color.DimGray;
-            this.lblLegendNotResponded.Location = new System.Drawing.Point(120, 26);
-            this.lblLegendNotResponded.Name = "lblLegendNotResponded";
-            this.lblLegendNotResponded.Size = new System.Drawing.Size(63, 15);
-            this.lblLegendNotResponded.Text = "! : 미정";
-
-            // 
-            // btnAddMeeting (미팅 추가)
+            // btnAddMeeting
             // 
             this.btnAddMeeting.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnAddMeeting.BackColor = System.Drawing.Color.Crimson;
@@ -288,47 +240,78 @@
             this.btnAddMeeting.Name = "btnAddMeeting";
             this.btnAddMeeting.Size = new System.Drawing.Size(102, 28);
             this.btnAddMeeting.TabIndex = 13;
-            this.btnAddMeeting.Text = "미팅 추가";
+            this.btnAddMeeting.Text = "+ 미팅 추가";
             this.btnAddMeeting.UseVisualStyleBackColor = false;
             this.btnAddMeeting.Visible = false;
             this.btnAddMeeting.Click += new System.EventHandler(this.btnAddMeeting_Click);
-
             // 
-            // btnCreateTeam
+            // flpMeetingSidebar
             // 
-            this.btnCreateTeam.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCreateTeam.BackColor = System.Drawing.Color.MediumSeaGreen;
-            this.btnCreateTeam.FlatAppearance.BorderSize = 0;
-            this.btnCreateTeam.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCreateTeam.Font = new System.Drawing.Font("맑은 고딕", 10.2F, System.Drawing.FontStyle.Bold);
-            this.btnCreateTeam.ForeColor = System.Drawing.Color.White;
-            this.btnCreateTeam.Location = new System.Drawing.Point(734, 58); // 기존 848에서 좌측으로 이동
-            this.btnCreateTeam.Name = "btnCreateTeam";
-            this.btnCreateTeam.Size = new System.Drawing.Size(102, 28);
-            this.btnCreateTeam.TabIndex = 11;
-            this.btnCreateTeam.Text = "팀 생성";
-            this.btnCreateTeam.UseVisualStyleBackColor = false;
-            this.btnCreateTeam.Visible = false;
-            this.btnCreateTeam.Click += new System.EventHandler(this.btnCreateTeam_Click);
-
+            this.flpMeetingSidebar.AutoScroll = true;
+            this.flpMeetingSidebar.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.flpMeetingSidebar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.flpMeetingSidebar.Location = new System.Drawing.Point(970, 96);
+            this.flpMeetingSidebar.Name = "flpMeetingSidebar";
+            this.flpMeetingSidebar.Size = new System.Drawing.Size(305, 528);
+            this.flpMeetingSidebar.TabIndex = 20;
+            this.flpMeetingSidebar.Visible = false;
             // 
-            // btnJoinTeam
+            // pnlMeetingLegend
             // 
-            this.btnJoinTeam.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnJoinTeam.BackColor = System.Drawing.Color.MediumSeaGreen;
-            this.btnJoinTeam.FlatAppearance.BorderSize = 0;
-            this.btnJoinTeam.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnJoinTeam.Font = new System.Drawing.Font("맑은 고딕", 10.2F, System.Drawing.FontStyle.Bold);
-            this.btnJoinTeam.ForeColor = System.Drawing.Color.White;
-            this.btnJoinTeam.Location = new System.Drawing.Point(620, 58); // 기존 734에서 좌측으로 이동
-            this.btnJoinTeam.Name = "btnJoinTeam";
-            this.btnJoinTeam.Size = new System.Drawing.Size(102, 28);
-            this.btnJoinTeam.TabIndex = 12;
-            this.btnJoinTeam.Text = "팀 참가";
-            this.btnJoinTeam.UseVisualStyleBackColor = false;
-            this.btnJoinTeam.Visible = false;
-            this.btnJoinTeam.Click += new System.EventHandler(this.btnJoinTeam_Click);
-
+            this.pnlMeetingLegend.BackColor = System.Drawing.Color.White;
+            this.pnlMeetingLegend.Controls.Add(this.lblLegendMeetingTitle);
+            this.pnlMeetingLegend.Controls.Add(this.lblLegendAttending);
+            this.pnlMeetingLegend.Controls.Add(this.lblLegendNotAttending);
+            this.pnlMeetingLegend.Controls.Add(this.lblLegendNotResponded);
+            this.pnlMeetingLegend.Location = new System.Drawing.Point(760, 558);
+            this.pnlMeetingLegend.Name = "pnlMeetingLegend";
+            this.pnlMeetingLegend.Size = new System.Drawing.Size(190, 62);
+            this.pnlMeetingLegend.TabIndex = 14;
+            this.pnlMeetingLegend.Visible = false;
+            // 
+            // lblLegendMeetingTitle
+            // 
+            this.lblLegendMeetingTitle.AutoSize = true;
+            this.lblLegendMeetingTitle.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold);
+            this.lblLegendMeetingTitle.ForeColor = System.Drawing.Color.Crimson;
+            this.lblLegendMeetingTitle.Location = new System.Drawing.Point(6, 6);
+            this.lblLegendMeetingTitle.Name = "lblLegendMeetingTitle";
+            this.lblLegendMeetingTitle.Size = new System.Drawing.Size(91, 15);
+            this.lblLegendMeetingTitle.TabIndex = 0;
+            this.lblLegendMeetingTitle.Text = "■ 팀 미팅 일정";
+            // 
+            // lblLegendAttending
+            // 
+            this.lblLegendAttending.AutoSize = true;
+            this.lblLegendAttending.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            this.lblLegendAttending.ForeColor = System.Drawing.Color.DimGray;
+            this.lblLegendAttending.Location = new System.Drawing.Point(6, 26);
+            this.lblLegendAttending.Name = "lblLegendAttending";
+            this.lblLegendAttending.Size = new System.Drawing.Size(51, 15);
+            this.lblLegendAttending.TabIndex = 1;
+            this.lblLegendAttending.Text = "✓ : 참석";
+            // 
+            // lblLegendNotAttending
+            // 
+            this.lblLegendNotAttending.AutoSize = true;
+            this.lblLegendNotAttending.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            this.lblLegendNotAttending.ForeColor = System.Drawing.Color.DimGray;
+            this.lblLegendNotAttending.Location = new System.Drawing.Point(66, 26);
+            this.lblLegendNotAttending.Name = "lblLegendNotAttending";
+            this.lblLegendNotAttending.Size = new System.Drawing.Size(49, 15);
+            this.lblLegendNotAttending.TabIndex = 2;
+            this.lblLegendNotAttending.Text = "X : 불참";
+            // 
+            // lblLegendNotResponded
+            // 
+            this.lblLegendNotResponded.AutoSize = true;
+            this.lblLegendNotResponded.Font = new System.Drawing.Font("맑은 고딕", 9F);
+            this.lblLegendNotResponded.ForeColor = System.Drawing.Color.DimGray;
+            this.lblLegendNotResponded.Location = new System.Drawing.Point(120, 26);
+            this.lblLegendNotResponded.Name = "lblLegendNotResponded";
+            this.lblLegendNotResponded.Size = new System.Drawing.Size(45, 15);
+            this.lblLegendNotResponded.TabIndex = 3;
+            this.lblLegendNotResponded.Text = "! : 미정";
             // 
             // MainForm
             // 
@@ -336,6 +319,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(970, 640);
+            this.Controls.Add(this.flpMeetingSidebar);
             this.Controls.Add(this.btnAddMeeting);
             this.Controls.Add(this.pnlMeetingLegend);
             this.Controls.Add(this.btnJoinTeam);
