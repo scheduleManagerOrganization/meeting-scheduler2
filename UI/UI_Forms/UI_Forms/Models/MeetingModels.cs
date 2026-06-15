@@ -30,6 +30,12 @@ namespace UI_Forms.Models
 
         [JsonPropertyName("deadlineDate")]
         public string DeadlineDate { get; set; }
+
+        [JsonPropertyName("creatorId")] // 새로 추가된 부분 6.15
+        public string CreatorId { get; set; }
+
+        [JsonPropertyName("finalizedSlotId")] // 새로 추가 6.15
+        public string FinalizedSlotId { get; set; }
     }
 
     // 3. 추천 시간대 조회 (GET /api/slots/{meetingId}) 응답용 DTO
@@ -74,5 +80,11 @@ namespace UI_Forms.Models
 
         [JsonPropertyName("respondedAt")]
         public DateTime RespondedAt { get; set; }
+    }
+
+    public class FinalizeMeetingRequest
+    {
+        [JsonPropertyName("slot_id")]
+        public string SlotId { get; set; } = string.Empty;
     }
 }

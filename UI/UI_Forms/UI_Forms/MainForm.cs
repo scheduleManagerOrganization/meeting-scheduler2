@@ -341,8 +341,57 @@ namespace UI_Forms
                     }
                 }
 
-                // TODO: 향후 GET /api/meetings/team/{teamId} 를 호출하여 
-                // Color.Crimson 색상과 FormatMeetingTitle()을 사용하여 미팅 일정을 _dayControls에 추가하는 로직 구현
+                // -------------------------------------------------------------
+                // 🌟 확정된 미팅 일정 캘린더에 추가 6.15
+                // -------------------------------------------------------------
+                var meetingsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingDto>>>($"/api/meetings/team/{selectedTeamId}");
+
+                if (meetingsResponse?.Success == true && meetingsResponse.Data != null)
+                {
+                    // 상태가 "finalized"이고 확정된 슬롯 ID가 있는 미팅만 필터링
+                    var finalizedMeetings = meetingsResponse.Data
+                        .Where(m => m.Status == "finalized" && !string.IsNullOrEmpty(m.FinalizedSlotId))
+                        .ToList();
+
+                    foreach (var meeting in finalizedMeetings)
+                    {
+                        // 확정된 미팅의 상세 슬롯 정보 가져오기
+                        var slotsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingSlotDto>>>($"/api/slots/{meeting.Id}");
+
+                        if (slotsResponse?.Success == true && slotsResponse.Data != null)
+                        {
+                            // 확정된 슬롯 찾기
+                            var finalSlot = slotsResponse.Data.FirstOrDefault(s => s.Id == meeting.FinalizedSlotId);
+                            if (finalSlot != null)
+                            {
+                                // 달력의 몇 번째 칸(Day)에 그려야 하는지 계산
+                                DateTime scheduleDate = finalSlot.StartTime.Date;
+                                int dayIndex = (int)(scheduleDate - startDate).TotalDays;
+
+                                // 현재 화면에 보이는 날짜 범위 안인지 확인
+                                if (dayIndex >= 0 && dayIndex < totalDays)
+                                {
+                                    // 기존에 만들어두셨던 FormatMeetingTitle 활용 (확정되었으니 무조건 "yes" 아이콘 사용)
+                                    string formattedTitle = FormatMeetingTitle(meeting.Title, "yes");
+                                    string displayTitle = $"{finalSlot.StartTime:HH:mm} {formattedTitle}";
+
+                                    // 달력에 빨간색(Crimson)으로 슬롯 추가
+                                    _dayControls[dayIndex].AddScheduleSlot(displayTitle, Color.Crimson, false, () =>
+                                    {
+                                        // 달력에 뜬 미팅을 클릭했을 때 보여줄 정보 창
+                                        MessageBox.Show(
+                                            $"[확정된 미팅]\n\n제목: {meeting.Title}\n내용: {meeting.Description}\n시간: {finalSlot.StartTime:MM/dd HH:mm} ~ {finalSlot.EndTime:HH:mm}",
+                                            "팀 미팅 정보",
+                                            MessageBoxButtons.OK,
+                                            MessageBoxIcon.Information
+                                        );
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                // -------------------------------------------------------------
             }
             catch (Exception ex)
             {
@@ -491,6 +540,119 @@ namespace UI_Forms
             }
         }
 
+        //private async Task LoadAndRenderTeamMeetingsAsync()
+        //{
+        //    flpMeetingSidebar.Controls.Clear();
+        //    string currentTeamId = cmbTeams.SelectedValue?.ToString();
+        //    if (string.IsNullOrEmpty(currentTeamId)) return;
+
+        //    // 미팅 목록 가져오기
+        //    var meetingsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingDto>>>($"/api/meetings/team/{currentTeamId}");
+        //    if (meetingsResponse?.Success != true || meetingsResponse.Data == null) return;
+
+        //    foreach (var meeting in meetingsResponse.Data)
+        //    {
+        //        // 미팅별 카드(패널) 생성
+        //        Panel pnlCard = new Panel
+        //        {
+        //            Width = 250,
+        //            AutoSize = true,
+        //            BackColor = Color.White,
+        //            Margin = new Padding(10),
+        //            Padding = new Padding(10),
+        //            BorderStyle = BorderStyle.FixedSingle
+        //        };
+
+        //        // 제목 및 소요 시간
+        //        Label lblTitle = new Label
+        //        {
+        //            Text = $"{meeting.Title} ({meeting.DurationMinutes}분)",
+        //            Font = new Font("맑은 고딕", 11F, FontStyle.Bold),
+        //            ForeColor = Color.Crimson,
+        //            AutoSize = true,
+        //            Location = new Point(10, 10)
+        //        };
+        //        pnlCard.Controls.Add(lblTitle);
+
+        //        // 추천 슬롯 데이터 가져오기
+        //        var slotsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingSlotDto>>>($"/api/slots/{meeting.Id}");
+        //        int yOffset = 40;
+
+        //        if (slotsResponse?.Success == true && slotsResponse.Data != null && slotsResponse.Data.Count > 0)
+        //        {
+        //            Label lblSub = new Label { Text = "추천 시간대:", Font = new Font("맑은 고딕", 9F, FontStyle.Bold), Location = new Point(10, yOffset), AutoSize = true };
+        //            pnlCard.Controls.Add(lblSub);
+        //            yOffset += 20;
+
+        //            foreach (var slot in slotsResponse.Data)
+        //            {
+        //                Panel slotRow = new Panel
+        //                {
+        //                    Location = new Point(10, yOffset),
+        //                    Size = new Size(225, 24),
+        //                    BackColor = Color.White
+        //                };
+
+        //                Label lblSlot = new Label
+        //                {
+        //                    Text = $"{slot.StartTime:MM/dd HH:mm} ~ {slot.EndTime:HH:mm}",
+        //                    Location = new Point(4, 3),
+        //                    Size = new Size(145, 18),
+        //                    AutoEllipsis = true,
+        //                    Font = new Font("맑은 고딕", 9F)
+        //                };
+
+        //                string responseStatus = GetCurrentUserSlotResponse(slot);
+        //                Label lblResponse = new Label
+        //                {
+        //                    Text = FormatSlotResponseLabel(responseStatus),
+        //                    Location = new Point(150, 3),
+        //                    Size = new Size(70, 18),
+        //                    TextAlign = ContentAlignment.MiddleRight,
+        //                    ForeColor = GetSlotResponseColor(responseStatus),
+        //                    Font = new Font("맑은 고딕", 9F, FontStyle.Bold)
+        //                };
+
+        //                slotRow.Controls.Add(lblSlot);
+        //                slotRow.Controls.Add(lblResponse);
+        //                pnlCard.Controls.Add(slotRow);
+        //                yOffset += 26;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            Label lblNoSlot = new Label { Text = "조율 중이거나 슬롯이 없습니다.", Location = new Point(10, yOffset), AutoSize = true };
+        //            pnlCard.Controls.Add(lblNoSlot);
+        //            yOffset += 25;
+        //        }
+
+        //        // 응답하기 버튼 생성
+        //        Button btnRespond = new Button
+        //        {
+        //            Text = "시간대 응답하기",
+        //            BackColor = Color.CornflowerBlue,
+        //            ForeColor = Color.White,
+        //            FlatStyle = FlatStyle.Flat,
+        //            Location = new Point(10, yOffset + 10),
+        //            Size = new Size(225, 30)
+        //        };
+        //        btnRespond.Click += (s, e) =>
+        //        {
+        //            using (var respondForm = new RespondSlotForm(meeting.Id, meeting.Title))
+        //            {
+        //                if (respondForm.ShowDialog() == DialogResult.OK)
+        //                {
+        //                    _ = LoadAndRenderTeamMeetingsAsync(); // 응답 후 패널 새로고침
+        //                }
+        //            }
+        //        };
+        //        pnlCard.Controls.Add(btnRespond);
+        //        pnlCard.Height = btnRespond.Bottom + 15;
+
+        //        flpMeetingSidebar.Controls.Add(pnlCard);
+        //    }
+        //}
+
         private async Task LoadAndRenderTeamMeetingsAsync()
         {
             flpMeetingSidebar.Controls.Clear();
@@ -501,25 +663,30 @@ namespace UI_Forms
             var meetingsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingDto>>>($"/api/meetings/team/{currentTeamId}");
             if (meetingsResponse?.Success != true || meetingsResponse.Data == null) return;
 
+
             foreach (var meeting in meetingsResponse.Data)
             {
+                bool isCreator = meeting.CreatorId == ApiService.CurrentUserId;
+                bool isFinalized = meeting.Status == "finalized";
+
                 // 미팅별 카드(패널) 생성
                 Panel pnlCard = new Panel
                 {
-                    Width = 250,
+                    Width = 260, // UI 공간 확보를 위해 약간 넓힘
                     AutoSize = true,
-                    BackColor = Color.White,
+                    BackColor = isFinalized ? Color.WhiteSmoke : Color.White, // 확정된 미팅은 배경색 변경
                     Margin = new Padding(10),
                     Padding = new Padding(10),
                     BorderStyle = BorderStyle.FixedSingle
                 };
 
-                // 제목 및 소요 시간
+                // 제목 (확정 여부 표시)
+                string titleText = isFinalized ? $"[확정됨] {meeting.Title}" : $"{meeting.Title} ({meeting.DurationMinutes}분)";
                 Label lblTitle = new Label
                 {
-                    Text = $"{meeting.Title} ({meeting.DurationMinutes}분)",
+                    Text = titleText,
                     Font = new Font("맑은 고딕", 11F, FontStyle.Bold),
-                    ForeColor = Color.Crimson,
+                    ForeColor = isFinalized ? Color.MediumSeaGreen : Color.Crimson,
                     AutoSize = true,
                     Location = new Point(10, 10)
                 };
@@ -531,7 +698,7 @@ namespace UI_Forms
 
                 if (slotsResponse?.Success == true && slotsResponse.Data != null && slotsResponse.Data.Count > 0)
                 {
-                    Label lblSub = new Label { Text = "추천 시간대:", Font = new Font("맑은 고딕", 9F, FontStyle.Bold), Location = new Point(10, yOffset), AutoSize = true };
+                    Label lblSub = new Label { Text = "추천 시간대 및 응답 현황:", Font = new Font("맑은 고딕", 9F, FontStyle.Bold), Location = new Point(10, yOffset), AutoSize = true };
                     pnlCard.Controls.Add(lblSub);
                     yOffset += 20;
 
@@ -540,34 +707,90 @@ namespace UI_Forms
                         Panel slotRow = new Panel
                         {
                             Location = new Point(10, yOffset),
-                            Size = new Size(225, 24),
-                            BackColor = Color.White
+                            Size = new Size(240, isCreator && !isFinalized ? 50 : 40), // 생성자면 버튼 공간 추가
+                            BackColor = Color.Transparent
                         };
 
+                        // 1. 시간대 라벨
                         Label lblSlot = new Label
                         {
                             Text = $"{slot.StartTime:MM/dd HH:mm} ~ {slot.EndTime:HH:mm}",
-                            Location = new Point(4, 3),
-                            Size = new Size(145, 18),
+                            Location = new Point(0, 3),
+                            Size = new Size(160, 18),
                             AutoEllipsis = true,
                             Font = new Font("맑은 고딕", 9F)
                         };
 
+                        // 2. 나의 응답 상태 라벨
                         string responseStatus = GetCurrentUserSlotResponse(slot);
-                        Label lblResponse = new Label
+                        Label lblMyResponse = new Label
                         {
                             Text = FormatSlotResponseLabel(responseStatus),
-                            Location = new Point(150, 3),
-                            Size = new Size(70, 18),
+                            Location = new Point(165, 3),
+                            Size = new Size(65, 18),
                             TextAlign = ContentAlignment.MiddleRight,
                             ForeColor = GetSlotResponseColor(responseStatus),
                             Font = new Font("맑은 고딕", 9F, FontStyle.Bold)
                         };
 
+                        // 3. 팀원 전체 응답 요약 (참석 2 | 불참 1 | 미정 0)
+                        int yesCount = slot.Responses?.Count(r => r.Response?.ToLower() == "yes") ?? 0;
+                        int noCount = slot.Responses?.Count(r => r.Response?.ToLower() == "no") ?? 0;
+                        int maybeCount = slot.Responses?.Count(r => r.Response?.ToLower() == "maybe" || string.IsNullOrEmpty(r.Response)) ?? 0;
+
+                        Label lblSummary = new Label
+                        {
+                            Text = $"참석 {yesCount} | 불참 {noCount} | 미정 {maybeCount}",
+                            Location = new Point(0, 22),
+                            AutoSize = true,
+                            Font = new Font("맑은 고딕", 8F),
+                            ForeColor = Color.DimGray
+                        };
+
                         slotRow.Controls.Add(lblSlot);
-                        slotRow.Controls.Add(lblResponse);
+                        slotRow.Controls.Add(lblMyResponse);
+                        slotRow.Controls.Add(lblSummary);
+
+                        // 4. 팀장(생성자)을 위한 '미팅 확정' 버튼
+                        if (isCreator && !isFinalized)
+                        {
+                            Button btnFinalize = new Button
+                            {
+                                Text = "확정",
+                                Location = new Point(180, 20),
+                                Size = new Size(50, 24),
+                                BackColor = Color.MediumSeaGreen,
+                                ForeColor = Color.White,
+                                FlatStyle = FlatStyle.Flat,
+                                Font = new Font("맑은 고딕", 8F, FontStyle.Bold)
+                            };
+
+                            btnFinalize.Click += async (s, e) =>
+                            {
+                                var confirmResult = MessageBox.Show($"이 시간대로 미팅을 확정하시겠습니까?\n{lblSlot.Text}", "미팅 확정", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                                if (confirmResult == DialogResult.Yes)
+                                {
+                                    btnFinalize.Enabled = false;
+                                    var requestPayload = new FinalizeMeetingRequest { SlotId = slot.Id };
+                                    var finalizeRes = await ApiService.PostAsync<FinalizeMeetingRequest, ApiResponse<object>>($"/api/meetings/{meeting.Id}/finalize", requestPayload);
+
+                                    if (finalizeRes?.Success == true)
+                                    {
+                                        MessageBox.Show("미팅이 성공적으로 확정되었습니다!");
+                                        await LoadAndRenderTeamMeetingsAsync(); // UI 새로고침
+                                    }
+                                    else
+                                    {
+                                        MessageBox.Show("미팅 확정 실패: " + finalizeRes?.Message);
+                                        btnFinalize.Enabled = true;
+                                    }
+                                }
+                            };
+                            slotRow.Controls.Add(btnFinalize);
+                        }
+
                         pnlCard.Controls.Add(slotRow);
-                        yOffset += 26;
+                        yOffset += slotRow.Height + 5;
                     }
                 }
                 else
@@ -577,28 +800,35 @@ namespace UI_Forms
                     yOffset += 25;
                 }
 
-                // 응답하기 버튼 생성
-                Button btnRespond = new Button
+                // 응답하기 버튼 (확정되지 않은 미팅일 때만 표시)
+                if (!isFinalized)
                 {
-                    Text = "시간대 응답하기",
-                    BackColor = Color.CornflowerBlue,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Location = new Point(10, yOffset + 10),
-                    Size = new Size(225, 30)
-                };
-                btnRespond.Click += (s, e) =>
-                {
-                    using (var respondForm = new RespondSlotForm(meeting.Id, meeting.Title))
+                    Button btnRespond = new Button
                     {
-                        if (respondForm.ShowDialog() == DialogResult.OK)
+                        Text = "시간대 응답하기",
+                        BackColor = Color.CornflowerBlue,
+                        ForeColor = Color.White,
+                        FlatStyle = FlatStyle.Flat,
+                        Location = new Point(10, yOffset + 5),
+                        Size = new Size(240, 30)
+                    };
+                    btnRespond.Click += (s, e) =>
+                    {
+                        using (var respondForm = new RespondSlotForm(meeting.Id, meeting.Title))
                         {
-                            _ = LoadAndRenderTeamMeetingsAsync(); // 응답 후 패널 새로고침
+                            if (respondForm.ShowDialog() == DialogResult.OK)
+                            {
+                                _ = LoadAndRenderTeamMeetingsAsync(); // 응답 후 패널 새로고침
+                            }
                         }
-                    }
-                };
-                pnlCard.Controls.Add(btnRespond);
-                pnlCard.Height = btnRespond.Bottom + 15;
+                    };
+                    pnlCard.Controls.Add(btnRespond);
+                    pnlCard.Height = btnRespond.Bottom + 15;
+                }
+                else
+                {
+                    pnlCard.Height = yOffset + 10;
+                }
 
                 flpMeetingSidebar.Controls.Add(pnlCard);
             }
