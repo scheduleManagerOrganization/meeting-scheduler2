@@ -190,6 +190,16 @@ namespace UI_Forms
             {
                 // The current backend can fail with a MongoDB responses-array update conflict.
                 // UI keeps the user's choice locally so the workflow remains usable.
+
+                // API 호출 결과를 반환하도록 수정 (성공 여부 파악을 위해)
+                var response = await ApiService.PostAsync<object, ApiResponse<object>>("/api/respond-slot", payload);
+
+                // 만약 통신은 성공했는데 백엔드 로직에서 실패(Success = false)를 뱉었다면 예외 발생
+                if (response != null && !response.Success)
+                {
+                    throw new Exception(response.Message ?? "서버에서 응답 저장에 실패했습니다.");
+                }
+
             }
         }
 
