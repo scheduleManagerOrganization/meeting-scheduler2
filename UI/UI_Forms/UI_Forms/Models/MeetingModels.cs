@@ -50,6 +50,9 @@ namespace UI_Forms.Models
         [JsonPropertyName("aiScore")]
         public double AiScore { get; set; }
 
+        [JsonPropertyName("aiReason")]
+        public string AiReason { get; set; }
+
         [JsonPropertyName("responses")]
         public System.Collections.Generic.List<SlotResponseDto> Responses { get; set; }
     }

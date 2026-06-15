@@ -76,6 +76,18 @@ namespace UI_Forms
                         Tag = "maybe"
                     };
 
+                    Label lblReason = new Label
+                    {
+                        Text = $"{slot.AiReason}",
+                        Location = new Point(10, 60),
+                        AutoSize = true,
+                        MaximumSize = new Size(280,0),
+                        Font = new Font("맑은 고딕", 9F, FontStyle.Regular)
+                    };
+                    pnl.Controls.Add(lblReason);
+
+                    pnl.Height = lblReason.Bottom + 10; // 라벨의 맨 밑바닥 Y좌표 + 아래쪽 여백 10
+
                     string currentResponse = GetCurrentUserResponse(slot);
                     if (currentResponse == "yes") rdoYes.Checked = true;
                     else if (currentResponse == "no") rdoNo.Checked = true;
@@ -164,7 +176,15 @@ namespace UI_Forms
         {
             try
             {
-                await ApiService.PostAsync<object, ApiResponse<object>>("/api/respond-slot", payload);
+                //await ApiService.PostAsync<object, ApiResponse<object>>("/api/respond-slot", payload);
+                // API 호출 결과를 반환하도록 수정 (성공 여부 파악을 위해)
+    var response = await ApiService.PostAsync<object, ApiResponse<object>>("/api/respond-slot", payload);
+    
+    // 만약 통신은 성공했는데 백엔드 로직에서 실패(Success = false)를 뱉었다면 예외 발생
+    if (response != null && !response.Success)
+    {
+        throw new Exception(response.Message ?? "서버에서 응답 저장에 실패했습니다.");
+    }
             }
             catch
             {
