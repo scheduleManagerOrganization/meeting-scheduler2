@@ -339,7 +339,7 @@
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "AI 팀 캘린더 메인";
+            this.Text = "EasyMeet";
             this.pnlMeetingLegend.ResumeLayout(false);
             this.pnlMeetingLegend.PerformLayout();
             this.ResumeLayout(false);

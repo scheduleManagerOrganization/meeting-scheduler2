@@ -36,20 +36,20 @@
             // 
             this.lblTitle.AutoSize = true;
             this.lblTitle.Font = new System.Drawing.Font("맑은 고딕", 20F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Location = new System.Drawing.Point(80, 24);
+            this.lblTitle.Location = new System.Drawing.Point(79, 24);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(134, 37);
+            this.lblTitle.Size = new System.Drawing.Size(139, 37);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "AI 캘린더";
+            this.lblTitle.Text = "EasyMeet";
             // 
             // lblEmail
             // 
             this.lblEmail.AutoSize = true;
             this.lblEmail.Location = new System.Drawing.Point(30, 80);
             this.lblEmail.Name = "lblEmail";
-            this.lblEmail.Size = new System.Drawing.Size(41, 12);
+            this.lblEmail.Size = new System.Drawing.Size(62, 12);
             this.lblEmail.TabIndex = 1;
-            this.lblEmail.Text = "이메일";
+            this.lblEmail.Text = "이메일(ID)";
             // 
             // txtEmail
             // 
