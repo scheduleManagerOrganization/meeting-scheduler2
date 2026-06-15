@@ -494,6 +494,7 @@ namespace UI_Forms
                 if (result == DialogResult.OK)
                 {
                     await RenderCalendarAsync();
+                    await LoadAndRenderTeamMeetingsAsync();      // 사이드바 미팅 목록 갱신 추가!
                 }
             }
         }
@@ -777,7 +778,9 @@ namespace UI_Forms
                                     if (finalizeRes?.Success == true)
                                     {
                                         MessageBox.Show("미팅이 성공적으로 확정되었습니다!");
-                                        await LoadAndRenderTeamMeetingsAsync(); // UI 새로고침
+                                        await RenderCalendarAsync();                 // 1. 달력 영역 새로고침 (추가된 부분)
+                                        await LoadAndRenderTeamMeetingsAsync();      // 2. 우측 사이드바 미팅 목록 새로고침
+                                    
                                     }
                                     else
                                     {
