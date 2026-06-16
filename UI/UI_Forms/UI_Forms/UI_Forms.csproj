@@ -162,6 +162,9 @@
     <EmbeddedResource Include="AddScheduleForm.resx">
       <DependentUpon>AddScheduleForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="JoinTeamForm.resx">
+      <DependentUpon>JoinTeamForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="LoginForm.resx">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </EmbeddedResource>
