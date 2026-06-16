@@ -259,7 +259,7 @@ namespace UI_Forms
 
                     if (schedule.Slots != null)
                     {
-                        foreach (var slot in schedule.Slots)
+                        foreach (var slot in schedule.Slots.OrderBy(slot => slot.Start))//시작시간 순 정렬
                         {
                             string displayTitle = $"{slot.Start} {FormatTitle(slot.Title)}";
                             bool isFullBox = slot.Start == "00:00" && slot.End == "23:59";
@@ -342,7 +342,7 @@ namespace UI_Forms
                 }
 
                 // -------------------------------------------------------------
-                // 🌟 확정된 미팅 일정 캘린더에 추가 6.15
+                // 🌟 확정된 미팅 일정 캘린더에 추가
                 // -------------------------------------------------------------
                 var meetingsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingDto>>>($"/api/meetings/team/{selectedTeamId}");
 
@@ -352,6 +352,9 @@ namespace UI_Forms
                     var finalizedMeetings = meetingsResponse.Data
                         .Where(m => m.Status == "finalized" && !string.IsNullOrEmpty(m.FinalizedSlotId))
                         .ToList();
+
+                    // 1. 화면에 그릴 최종 슬롯들을 임시 리스트에 수집
+                    var slotsToRender = new List<(MeetingDto Meeting, MeetingSlotDto Slot)>();
 
                     foreach (var meeting in finalizedMeetings)
                     {
@@ -364,30 +367,30 @@ namespace UI_Forms
                             var finalSlot = slotsResponse.Data.FirstOrDefault(s => s.Id == meeting.FinalizedSlotId);
                             if (finalSlot != null)
                             {
-                                // 달력의 몇 번째 칸(Day)에 그려야 하는지 계산
-                                DateTime scheduleDate = finalSlot.StartTime.Date;
-                                int dayIndex = (int)(scheduleDate - startDate).TotalDays;
-
-                                // 현재 화면에 보이는 날짜 범위 안인지 확인
-                                if (dayIndex >= 0 && dayIndex < totalDays)
-                                {
-                                    // 기존에 만들어두셨던 FormatMeetingTitle 활용 (확정되었으니 무조건 "yes" 아이콘 사용)
-                                    string formattedTitle = FormatMeetingTitle(meeting.Title, "yes");
-                                    string displayTitle = $"{finalSlot.StartTime:HH:mm} {formattedTitle}";
-
-                                    // 달력에 빨간색(Crimson)으로 슬롯 추가
-                                    _dayControls[dayIndex].AddScheduleSlot(displayTitle, Color.Crimson, false, () =>
-                                    {
-                                        // 달력에 뜬 미팅을 클릭했을 때 보여줄 정보 창
-                                        MessageBox.Show(
-                                            $"[확정된 미팅]\n\n제목: {meeting.Title}\n내용: {meeting.Description}\n시간: {finalSlot.StartTime:MM/dd HH:mm} ~ {finalSlot.EndTime:HH:mm}",
-                                            "팀 미팅 정보",
-                                            MessageBoxButtons.OK,
-                                            MessageBoxIcon.Information
-                                        );
-                                    });
-                                }
+                                slotsToRender.Add((meeting, finalSlot));
                             }
+                        }
+                    }
+                    // 2. 수집된 전체 슬롯을 StartTime 기준으로 정렬 후 캘린더에 배치
+                    foreach (var item in slotsToRender.OrderBy(x => x.Slot.StartTime))
+                    {
+                        DateTime scheduleDate = item.Slot.StartTime.Date;
+                        int dayIndex = (int)(scheduleDate - startDate).TotalDays;
+
+                        if (dayIndex >= 0 && dayIndex < totalDays)
+                        {
+                            string formattedTitle = FormatMeetingTitle(item.Meeting.Title, "yes");
+                            string displayTitle = $"{item.Slot.StartTime:HH:mm} {formattedTitle}";
+
+                            _dayControls[dayIndex].AddScheduleSlot(displayTitle, Color.Crimson, false, () =>
+                            {
+                                MessageBox.Show(
+                                    $"[확정된 미팅]\n\n제목: {item.Meeting.Title}\n내용: {item.Meeting.Description}\n시간: {item.Slot.StartTime:MM/dd HH:mm} ~ {item.Slot.EndTime:HH:mm}",
+                                    "팀 미팅 정보",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information
+                                );
+                            });
                         }
                     }
                 }
