@@ -293,108 +293,115 @@ namespace UI_Forms
 
                 string startDateStr = startDate.ToString("yyyy-MM-dd");
 
-                var response = await ApiService.GetAsync<ApiResponse<TeamRangeScheduleData>>(
+                // 1. 가용 시간 데이터와 팀 미팅 목록을 동시에 가져오기 (성능 향상)
+                var teamResponseTask = ApiService.GetAsync<ApiResponse<TeamRangeScheduleData>>(
                     $"/api/availability/team/{selectedTeamId}/range?startDate={startDateStr}&days={totalDays}"
                 );
+                var meetingsResponseTask = ApiService.GetAsync<ApiResponse<List<MeetingDto>>>($"/api/meetings/team/{selectedTeamId}");
+
+                await Task.WhenAll(teamResponseTask, meetingsResponseTask);
+
+                var teamResponse = teamResponseTask.Result;
+                var meetingsResponse = meetingsResponseTask.Result;
 
                 if (renderVersion != _renderVersion) return;
-                if (response?.Success != true || response.Data?.Schedules == null) return;
 
-                var groupedByDate = response.Data.Schedules.GroupBy(s => s.Date);
+                // 🌟 2. 렌더링할 전체 항목을 모아둘 임시 리스트 생성
+                // (달력의 칸 위치(DayIndex), 시작시간(분), 제목, 색상, 클릭이벤트)
+                var allRenderItems = new List<(int DayIndex, int StartMinutes, string Title, Color Color, Action OnClick)>();
 
-                foreach (var group in groupedByDate)
+                // --- [가용 시간 일정 수집] ---
+                if (teamResponse?.Success == true && teamResponse.Data?.Schedules != null)
                 {
-                    if (!DateTime.TryParse(group.Key, out var scheduleDate)) continue;
-
-                    int dayIndex = (int)(scheduleDate - startDate).TotalDays;
-                    if (dayIndex < 0 || dayIndex >= totalDays) continue;
-
-                    var teamSlots = group
-                        .Where(user => user.Slots != null)
-                        .SelectMany(user => user.Slots.Select(slot => new
-                        {
-                            UserId = user.UserId,
-                            UserName = user.UserName,
-                            Slot = slot
-                        }))
-                        .OrderBy(item => ToMinutes(item.Slot.Start))
-                        .ThenByDescending(item => ToMinutes(item.Slot.End))
-                        .ToList();
-
-                    foreach (var item in teamSlots)
+                    foreach (var group in teamResponse.Data.Schedules.GroupBy(s => s.Date))
                     {
-                        Color userColor = GetTeamUserColor(item.UserId);
-                        RememberTeamLegendUser(item.UserId, item.UserName);
+                        if (!DateTime.TryParse(group.Key, out var scheduleDate)) continue;
+                        int dayIndex = (int)(scheduleDate - startDate).TotalDays;
+                        if (dayIndex < 0 || dayIndex >= totalDays) continue;
 
-                        string displayTitle = $"{item.Slot.Start} - {item.Slot.End}";
-
-                        _dayControls[dayIndex].AddScheduleSlot(displayTitle, userColor, false, () =>
-                        {
-                            using (var detailForm = new ScheduleDetailForm(scheduleDate, item.Slot, selectedTeamId))
+                        var teamSlots = group
+                            .Where(user => user.Slots != null)
+                            .SelectMany(user => user.Slots.Select(slot => new
                             {
-                                if (detailForm.ShowDialog() == DialogResult.OK)
+                                UserId = user.UserId,
+                                UserName = user.UserName,
+                                Slot = slot
+                            })).ToList();
+
+                        foreach (var item in teamSlots)
+                        {
+                            Color userColor = GetTeamUserColor(item.UserId);
+                            RememberTeamLegendUser(item.UserId, item.UserName);
+
+                            string displayTitle = $"{item.Slot.Start} - {item.Slot.End}";
+                            int startMinutes = ToMinutes(item.Slot.Start);
+
+                            allRenderItems.Add((dayIndex, startMinutes, displayTitle, userColor, () =>
+                            {
+                                using (var detailForm = new ScheduleDetailForm(scheduleDate, item.Slot, selectedTeamId))
                                 {
-                                    _ = RenderCalendarAsync();
+                                    if (detailForm.ShowDialog() == DialogResult.OK)
+                                    {
+                                        _ = RenderCalendarAsync();
+                                    }
                                 }
                             }
-                        });
+                            ));
+                        }
                     }
                 }
 
-                // -------------------------------------------------------------
-                // 🌟 확정된 미팅 일정 캘린더에 추가
-                // -------------------------------------------------------------
-                var meetingsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingDto>>>($"/api/meetings/team/{selectedTeamId}");
-
+                // --- [확정된 미팅 수집] ---
                 if (meetingsResponse?.Success == true && meetingsResponse.Data != null)
                 {
-                    // 상태가 "finalized"이고 확정된 슬롯 ID가 있는 미팅만 필터링
                     var finalizedMeetings = meetingsResponse.Data
                         .Where(m => m.Status == "finalized" && !string.IsNullOrEmpty(m.FinalizedSlotId))
                         .ToList();
 
-                    // 1. 화면에 그릴 최종 슬롯들을 임시 리스트에 수집
-                    var slotsToRender = new List<(MeetingDto Meeting, MeetingSlotDto Slot)>();
-
                     foreach (var meeting in finalizedMeetings)
                     {
-                        // 확정된 미팅의 상세 슬롯 정보 가져오기
                         var slotsResponse = await ApiService.GetAsync<ApiResponse<List<MeetingSlotDto>>>($"/api/slots/{meeting.Id}");
-
                         if (slotsResponse?.Success == true && slotsResponse.Data != null)
                         {
-                            // 확정된 슬롯 찾기
                             var finalSlot = slotsResponse.Data.FirstOrDefault(s => s.Id == meeting.FinalizedSlotId);
                             if (finalSlot != null)
                             {
-                                slotsToRender.Add((meeting, finalSlot));
+                                DateTime scheduleDate = finalSlot.StartTime.Date;
+                                int dayIndex = (int)(scheduleDate - startDate).TotalDays;
+
+                                if (dayIndex >= 0 && dayIndex < totalDays)
+                                {
+                                    string formattedTitle = FormatMeetingTitle(meeting.Title, "yes");
+                                    string displayTitle = $"{finalSlot.StartTime:HH:mm} {formattedTitle}";
+
+                                    // 시간을 분(Minutes)으로 변환하여 정렬 기준으로 삼음
+                                    int startMinutes = finalSlot.StartTime.Hour * 60 + finalSlot.StartTime.Minute;
+
+                                    allRenderItems.Add((dayIndex, startMinutes, displayTitle, Color.Crimson, () =>
+                                    {
+                                        MessageBox.Show(
+                                            $"[확정된 미팅]\n\n제목: {meeting.Title}\n내용: {meeting.Description}\n시간: {finalSlot.StartTime:MM/dd HH:mm} ~ {finalSlot.EndTime:HH:mm}",
+                                            "팀 미팅 정보",
+                                            MessageBoxButtons.OK,
+                                            MessageBoxIcon.Information
+                                        );
+                                    }
+                                    ));
+                                }
                             }
                         }
                     }
-                    // 2. 수집된 전체 슬롯을 StartTime 기준으로 정렬 후 캘린더에 배치
-                    foreach (var item in slotsToRender.OrderBy(x => x.Slot.StartTime))
+                }
+
+                // 🌟 3. 모든 데이터를 수집한 뒤, 날짜별(DayIndex)로 그룹화하여 시작 시간(StartMinutes) 순서대로 캘린더에 그리기
+                var groupedByDay = allRenderItems.GroupBy(x => x.DayIndex);
+                foreach (var dayGroup in groupedByDay)
+                {
+                    foreach (var item in dayGroup.OrderBy(x => x.StartMinutes))
                     {
-                        DateTime scheduleDate = item.Slot.StartTime.Date;
-                        int dayIndex = (int)(scheduleDate - startDate).TotalDays;
-
-                        if (dayIndex >= 0 && dayIndex < totalDays)
-                        {
-                            string formattedTitle = FormatMeetingTitle(item.Meeting.Title, "yes");
-                            string displayTitle = $"{item.Slot.StartTime:HH:mm} {formattedTitle}";
-
-                            _dayControls[dayIndex].AddScheduleSlot(displayTitle, Color.Crimson, false, () =>
-                            {
-                                MessageBox.Show(
-                                    $"[확정된 미팅]\n\n제목: {item.Meeting.Title}\n내용: {item.Meeting.Description}\n시간: {item.Slot.StartTime:MM/dd HH:mm} ~ {item.Slot.EndTime:HH:mm}",
-                                    "팀 미팅 정보",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information
-                                );
-                            });
-                        }
+                        _dayControls[dayGroup.Key].AddScheduleSlot(item.Title, item.Color, false, item.OnClick);
                     }
                 }
-                // -------------------------------------------------------------
             }
             catch (Exception ex)
             {
